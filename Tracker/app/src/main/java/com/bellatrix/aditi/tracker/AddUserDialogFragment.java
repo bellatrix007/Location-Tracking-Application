@@ -119,7 +119,7 @@ public class AddUserDialogFragment extends DialogFragment {
 
                             // add current user to pending request
                             // TODO: get user_name
-                            databaseReference.child("users").child(add_user).child("pending_req").child(user).setValue("Aditi");
+                            databaseReference.child("users").child(add_user).child("pending_req").child(user).setValue("Help");
 
                             // dismiss dialog
                             AddUserDialogFragment.this.getDialog().dismiss();

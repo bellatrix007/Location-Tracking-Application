@@ -68,7 +68,7 @@ public class TabFragment extends Fragment {
                 layoutManager.getOrientation());
         recyclerView.addItemDecoration(dividerItemDecoration);
 
-        requestAdapter = new RequestAdapter(type, requests);
+        requestAdapter = new RequestAdapter(user, type, requests);
         recyclerView.setAdapter(requestAdapter);
 
         // get requests list according to type
@@ -99,7 +99,7 @@ public class TabFragment extends Fragment {
                     requests.add(new Request(pending_user, pending_user_name));
                 }
 
-                requestAdapter = new RequestAdapter(type, requests);
+                requestAdapter = new RequestAdapter(user, type, requests);
                 recyclerView.setAdapter(requestAdapter);
             }
 
