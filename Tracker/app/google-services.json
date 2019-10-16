@@ -1,0 +1,40 @@
+{
+  "project_info": {
+    "project_number": "35743775792",
+    "firebase_url": "https://location-tracking-423aa.firebaseio.com",
+    "project_id": "location-tracking-423aa",
+    "storage_bucket": "location-tracking-423aa.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:35743775792:android:80dd210f1f090e8c0481f5",
+        "android_client_info": {
+          "package_name": "com.bellatrix.aditi.tracker"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "35743775792-7g8tls3n0jrehvas2qcsdlkt27vn6kmh.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAY0MP9syILaAjoph9xcenC4g5fEvHV36c"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "35743775792-7g8tls3n0jrehvas2qcsdlkt27vn6kmh.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
