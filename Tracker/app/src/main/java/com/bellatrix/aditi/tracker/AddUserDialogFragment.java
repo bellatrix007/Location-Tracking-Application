@@ -143,7 +143,10 @@ public class AddUserDialogFragment extends DialogFragment {
         searchQuery.addValueEventListener(new ValueEventListener() {
             @Override
             public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
-
+                // only listen if the fragment is attached
+                if(getActivity() == null || !isAdded()) {
+                    return;
+                }
                 neutral.setVisibility(View.VISIBLE);
                 et_user_phonenumber.setVisibility(View.GONE);
                 tv_user_text.setVisibility(View.VISIBLE);
