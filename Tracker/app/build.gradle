@@ -25,7 +25,6 @@ dependencies {
     implementation 'com.google.android.material:material:1.0.0'
     implementation 'com.android.support.constraint:constraint-layout:1.1.3'
     implementation 'androidx.drawerlayout:drawerlayout:1.0.0'
-
     implementation 'com.ringcaptcha.android:ringcaptcha:1.2.0'
 
     implementation 'com.google.firebase:firebase-core:17.2.0'
