@@ -135,9 +135,11 @@ public class LoginActivity extends AppCompatActivity {
 
     private void goToHome() {
         Intent intent = new Intent(this, MainActivity.class);
-        intent.putExtra("user", phone);
         startActivity(intent);
-        sp.edit().putBoolean("logged", true).apply();
+        SharedPreferences.Editor spEdit = sp.edit();
+        spEdit.putString("user", phone);
+        spEdit.putBoolean("logged", true);
+        spEdit.apply();
         finish();
     }
 }

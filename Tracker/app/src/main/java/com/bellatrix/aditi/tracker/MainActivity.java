@@ -1,6 +1,7 @@
 package com.bellatrix.aditi.tracker;
 
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.view.View;
 import android.view.Menu;
@@ -28,13 +29,13 @@ public class MainActivity extends AppCompatActivity
         Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
 
-        user = getIntent().getExtras().getString("user", "");
+        user =  getSharedPreferences("login", MODE_PRIVATE).getString("user", "");
 
         FloatingActionButton fab = (FloatingActionButton) findViewById(R.id.fab);
         fab.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                Snackbar.make(view, "Replace with your own action", Snackbar.LENGTH_LONG)
+                Snackbar.make(view, user, Snackbar.LENGTH_LONG)
                         .setAction("Action", null).show();
             }
         });
@@ -117,7 +118,10 @@ public class MainActivity extends AppCompatActivity
 
     private void goToLogin() {
         startActivity(new Intent(this, LoginActivity.class));
-        getSharedPreferences("login", MODE_PRIVATE).edit().putBoolean("logged", false).apply();
+        SharedPreferences.Editor spEdit = getSharedPreferences("login", MODE_PRIVATE).edit();
+        spEdit.putBoolean("logged", false);
+        spEdit.putString("user", "");
+        spEdit.apply();
         finish();
     }
 }

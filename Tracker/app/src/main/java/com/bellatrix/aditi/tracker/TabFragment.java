@@ -83,7 +83,7 @@ public class TabFragment extends Fragment {
         // database hook up
         firebaseDatabase = FirebaseDatabase.getInstance();
         databaseReference = firebaseDatabase.getReference();
-        DatabaseReference query = databaseReference.child("users").child("+918707022240").child(request_type);
+        DatabaseReference query = databaseReference.child("users").child(user).child(request_type);
 
         query.addValueEventListener(new ValueEventListener() {
             @Override
