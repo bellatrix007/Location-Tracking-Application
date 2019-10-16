@@ -91,9 +91,10 @@ public class MainActivity extends AppCompatActivity
 
         } else if (id == R.id.nav_manage) {
 
-        } else if (id == R.id.nav_share) {
-
-        } else if (id == R.id.nav_send) {
+        } else if (id == R.id.add_user) {
+            // pop up add user dialog
+            AddUserDialogFragment addUserDialogFragment = new AddUserDialogFragment();
+            addUserDialogFragment.show(getSupportFragmentManager(),"addUser");
 
         } else if (id == R.id.logout) {
             goToLogin();
