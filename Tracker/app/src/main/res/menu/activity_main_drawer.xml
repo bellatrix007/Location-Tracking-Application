@@ -28,6 +28,11 @@
                 android:id="@+id/add_user"
                 android:icon="@drawable/ic_add_user"
                 android:title="Add user" />
+
+            <item
+                android:id="@+id/view_req"
+                android:icon="@drawable/ic_view_req"
+                android:title="View Requests" />
         </menu>
     </item>
 

@@ -100,6 +100,10 @@ public class MainActivity extends AppCompatActivity
             AddUserDialogFragment addUserDialogFragment = AddUserDialogFragment.newInstance(user);;
             addUserDialogFragment.show(getSupportFragmentManager(),"addUser");
 
+        } else if (id == R.id.view_req) {
+            // show pending and sent requests
+            startActivity(new Intent(this, ViewRequestsActivity.class));
+
         } else if (id == R.id.logout) {
             goToLogin();
         }
