@@ -73,46 +73,14 @@ public class RequestAdapter extends RecyclerView.Adapter<RequestAdapter.FolderVi
         void bind(int position)
         {
             final String user1 = requests.get(position).getUser();
+            final String user1_name = requests.get(position).getName();
             this.tv_user.setText(user1);
-            this.tv_name.setText(requests.get(position).getName());
+            this.tv_name.setText(user1_name);
 
             cancel.setOnClickListener(new View.OnClickListener() {
                 @Override
                 public void onClick(View view) {
-
-                    // delete from pending requests
-                    Query query1 = databaseReference.child("users").child(user).child("pending_req").orderByKey().equalTo(user1);
-                    query1.addListenerForSingleValueEvent(new ValueEventListener() {
-                        @Override
-                        public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
-                            for(DataSnapshot ds : dataSnapshot.getChildren())
-                            {
-                                ds.getRef().removeValue();
-                            }
-                        }
-
-                        @Override
-                        public void onCancelled(@NonNull DatabaseError databaseError) {
-
-                        }
-                    });
-
-                    // delete from sent requests
-                    Query query2 = databaseReference.child("users").child(user1).child("sent_req").orderByKey().equalTo(user);
-                    query2.addListenerForSingleValueEvent(new ValueEventListener() {
-                        @Override
-                        public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
-                            for(DataSnapshot ds : dataSnapshot.getChildren())
-                            {
-                                ds.getRef().removeValue();
-                            }
-                        }
-
-                        @Override
-                        public void onCancelled(@NonNull DatabaseError databaseError) {
-
-                        }
-                    });
+                    deleteRequest(user, user1);
                 }
             });
 
@@ -120,6 +88,16 @@ public class RequestAdapter extends RecyclerView.Adapter<RequestAdapter.FolderVi
                 @Override
                 public void onClick(View view) {
                     // move the structures
+                    // delete request
+                    deleteRequest(user, user1);
+
+                    // move the users to sharing_to and seeing_of
+                    // sharing_to
+                    databaseReference.child("users").child(user).child("sharing_to").child(user1).setValue(user1_name);
+                    // seeing_of
+                    // TODO: add user name
+                    databaseReference.child("users").child(user1).child("seeing_of").child(user).setValue("Help");
+
                 }
             });
 
@@ -128,6 +106,43 @@ public class RequestAdapter extends RecyclerView.Adapter<RequestAdapter.FolderVi
                 cancel.setVisibility(View.GONE);
                 accept.setVisibility(View.GONE);
             }
+        }
+
+        void deleteRequest(String user, String user1)
+        {
+            // delete from pending requests
+            Query query1 = databaseReference.child("users").child(user).child("pending_req").orderByKey().equalTo(user1);
+            query1.addListenerForSingleValueEvent(new ValueEventListener() {
+                @Override
+                public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
+                    for(DataSnapshot ds : dataSnapshot.getChildren())
+                    {
+                        ds.getRef().removeValue();
+                    }
+                }
+
+                @Override
+                public void onCancelled(@NonNull DatabaseError databaseError) {
+
+                }
+            });
+
+            // delete from sent requests
+            Query query2 = databaseReference.child("users").child(user1).child("sent_req").orderByKey().equalTo(user);
+            query2.addListenerForSingleValueEvent(new ValueEventListener() {
+                @Override
+                public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
+                    for(DataSnapshot ds : dataSnapshot.getChildren())
+                    {
+                        ds.getRef().removeValue();
+                    }
+                }
+
+                @Override
+                public void onCancelled(@NonNull DatabaseError databaseError) {
+
+                }
+            });
         }
     }
 
