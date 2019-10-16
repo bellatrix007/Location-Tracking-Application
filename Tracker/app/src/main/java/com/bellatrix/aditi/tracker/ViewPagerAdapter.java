@@ -7,14 +7,16 @@ import androidx.fragment.app.FragmentPagerAdapter;
 public class ViewPagerAdapter extends FragmentPagerAdapter {
 
     private String title[] = {"Pending Requests", "Sent Requests"};
+    private String user;
 
-    public ViewPagerAdapter(FragmentManager manager) {
+    public ViewPagerAdapter(FragmentManager manager, String user) {
         super(manager);
+        this.user = user;
     }
 
     @Override
     public Fragment getItem(int position) {
-        return TabFragment.getInstance(position);
+        return TabFragment.getInstance(user, position);
     }
 
     @Override

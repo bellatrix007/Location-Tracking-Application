@@ -67,13 +67,14 @@ public class RequestAdapter extends RecyclerView.Adapter<RequestAdapter.FolderVi
             }
         }
     }
-//    public void swapCursor(Cursor cursor)
+
+//    public void swapCursor(List<Request> requests)
 //    {
-//        if(mCursor!=null)
-//            mCursor.close();
+//        if(requests!=null)
+//            this.requests.clear();
 //
-//        mCursor = cursor;
-//        if(mCursor!=null)
+//        this.requests = requests;
+//        if(this.requests!=null)
 //        {
 //            this.notifyDataSetChanged();
 //        }

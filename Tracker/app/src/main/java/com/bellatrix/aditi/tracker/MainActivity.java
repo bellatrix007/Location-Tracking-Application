@@ -102,7 +102,9 @@ public class MainActivity extends AppCompatActivity
 
         } else if (id == R.id.view_req) {
             // show pending and sent requests
-            startActivity(new Intent(this, ViewRequestsActivity.class));
+            Intent intent = new Intent(this, ViewRequestsActivity.class);
+            intent.putExtra("user", user);
+            startActivity(intent);
 
         } else if (id == R.id.logout) {
             goToLogin();

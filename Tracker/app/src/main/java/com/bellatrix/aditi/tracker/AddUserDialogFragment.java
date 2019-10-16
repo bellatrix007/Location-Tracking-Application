@@ -34,7 +34,7 @@ public class AddUserDialogFragment extends DialogFragment {
     private FirebaseDatabase firebaseDatabase;
     private DatabaseReference databaseReference;
 
-    private String user, add_user;
+    private String user, user_name, add_user, add_user_name;
 
     /**
      * Create a new instance of AddUserDialogFragment, providing "user"
@@ -115,10 +115,10 @@ public class AddUserDialogFragment extends DialogFragment {
                         else
                         {
                             // add found user to sent request
-                            databaseReference.child("users").child(user).child("sent_req").child(add_user).setValue("true");
+                            databaseReference.child("users").child(user).child("sent_req").child(add_user).setValue(add_user_name);
 
                             // add current user to pending request
-                            databaseReference.child("users").child(add_user).child("pending_req").child(add_user).setValue("true");
+                            databaseReference.child("users").child(add_user).child("pending_req").child(user).setValue(user_name);
 
                             // dismiss dialog
                             AddUserDialogFragment.this.getDialog().dismiss();
@@ -152,7 +152,7 @@ public class AddUserDialogFragment extends DialogFragment {
                 if(dataSnapshot.exists()) {
                     //Key exists
                     // TODO: Also print the user name in UI
-                    String add_user_name = dataSnapshot.child(add_user).child("name").getValue().toString();
+                    add_user_name = dataSnapshot.child(add_user).child("name").getValue().toString();
 
                     Log.d("User","User exists " + add_user_name);
                     tv_user_text.setText("User verified");

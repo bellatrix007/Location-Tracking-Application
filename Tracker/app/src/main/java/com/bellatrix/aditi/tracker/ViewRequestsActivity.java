@@ -11,6 +11,8 @@ import com.google.android.material.tabs.TabLayout;
 
 public class ViewRequestsActivity extends AppCompatActivity  {
 
+    private String user;
+
     private Toolbar toolbar;
     private TabLayout tabLayout;
     private ViewPager viewPager;
@@ -23,8 +25,10 @@ public class ViewRequestsActivity extends AppCompatActivity  {
         setSupportActionBar(toolbar);
         getSupportActionBar().setDisplayHomeAsUpEnabled(true);
 
+        user = getIntent().getExtras().getString("user", "");
+
         viewPager = (ViewPager) findViewById(R.id.viewpager);
-        ViewPagerAdapter adapter = new ViewPagerAdapter(getSupportFragmentManager());
+        ViewPagerAdapter adapter = new ViewPagerAdapter(getSupportFragmentManager(), user);
         viewPager.setAdapter(adapter);
 
         tabLayout = (TabLayout) findViewById(R.id.tabs);
