@@ -19,12 +19,16 @@ import com.google.android.material.snackbar.Snackbar;
 public class MainActivity extends AppCompatActivity
         implements NavigationView.OnNavigationItemSelectedListener {
 
+    private String user;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
         Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
+
+        user = getIntent().getExtras().getString("user", "");
 
         FloatingActionButton fab = (FloatingActionButton) findViewById(R.id.fab);
         fab.setOnClickListener(new View.OnClickListener() {
@@ -93,7 +97,7 @@ public class MainActivity extends AppCompatActivity
 
         } else if (id == R.id.add_user) {
             // pop up add user dialog
-            AddUserDialogFragment addUserDialogFragment = new AddUserDialogFragment();
+            AddUserDialogFragment addUserDialogFragment = AddUserDialogFragment.newInstance(user);;
             addUserDialogFragment.show(getSupportFragmentManager(),"addUser");
 
         } else if (id == R.id.logout) {

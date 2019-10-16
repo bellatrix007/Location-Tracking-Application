@@ -135,7 +135,7 @@ public class LoginActivity extends AppCompatActivity {
 
     private void goToHome() {
         Intent intent = new Intent(this, MainActivity.class);
-        intent.putExtra("phonenumber", phone);
+        intent.putExtra("user", phone);
         startActivity(intent);
         sp.edit().putBoolean("logged", true).apply();
         finish();

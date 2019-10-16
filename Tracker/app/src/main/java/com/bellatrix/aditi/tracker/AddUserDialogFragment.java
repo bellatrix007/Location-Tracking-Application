@@ -17,7 +17,6 @@ import androidx.appcompat.app.AlertDialog;
 import androidx.core.content.res.ResourcesCompat;
 import androidx.fragment.app.DialogFragment;
 
-import com.google.firebase.FirebaseApp;
 import com.google.firebase.database.DataSnapshot;
 import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.DatabaseReference;
@@ -27,13 +26,30 @@ import com.google.firebase.database.ValueEventListener;
 
 public class AddUserDialogFragment extends DialogFragment {
 
-    private FirebaseDatabase firebaseDatabase;
-    private DatabaseReference databaseReference;
-
     private Button neutral, positive;
     private EditText et_user_phonenumber;
     private TextView tv_user_text;
     private ImageView iv_user_sign;
+
+    private FirebaseDatabase firebaseDatabase;
+    private DatabaseReference databaseReference;
+
+    private String user, add_user;
+
+    /**
+     * Create a new instance of AddUserDialogFragment, providing "user"
+     * as an argument.
+     */
+    static AddUserDialogFragment newInstance(String user) {
+        AddUserDialogFragment f = new AddUserDialogFragment();
+
+        // Supply num input as an argument.
+        Bundle args = new Bundle();
+        args.putString("user", user);
+        f.setArguments(args);
+
+        return f;
+    }
 
     @Override
     public Dialog onCreateDialog(final Bundle savedInstanceState) {
@@ -58,6 +74,7 @@ public class AddUserDialogFragment extends DialogFragment {
             @Override
             public void onShow(DialogInterface dialog) {
 
+                user = getArguments().getString("user","");
                 neutral = mAlertDialog.getButton(AlertDialog.BUTTON_NEUTRAL);
                 positive = mAlertDialog.getButton(AlertDialog.BUTTON_POSITIVE);
                 et_user_phonenumber = ((EditText) AddUserDialogFragment.this.getDialog()
@@ -69,6 +86,10 @@ public class AddUserDialogFragment extends DialogFragment {
 
                 // neutral button would be invisible initially
                 neutral.setVisibility(View.GONE);
+
+                // firebase initialization
+                firebaseDatabase = FirebaseDatabase.getInstance();
+                databaseReference = firebaseDatabase.getReference();
 
                 neutral.setOnClickListener(new View.OnClickListener() {
                     @Override
@@ -93,7 +114,11 @@ public class AddUserDialogFragment extends DialogFragment {
                         }
                         else
                         {
-                            // add user, send request
+                            // add found user to sent request
+                            databaseReference.child("users").child(user).child("sent_req").child(add_user).setValue("true");
+
+                            // add current user to pending request
+                            databaseReference.child("users").child(add_user).child("pending_req").child(add_user).setValue("true");
 
                             // dismiss dialog
                             AddUserDialogFragment.this.getDialog().dismiss();
@@ -109,11 +134,11 @@ public class AddUserDialogFragment extends DialogFragment {
 
     private void searchForUser() {
 
+        add_user = et_user_phonenumber.getText().toString();
+
         // search for the user in the database
-        firebaseDatabase = FirebaseDatabase.getInstance();
-        databaseReference = firebaseDatabase.getReference();
         Query searchQuery = databaseReference.child("users")
-                .orderByKey().equalTo(et_user_phonenumber.getText().toString());
+                .orderByKey().equalTo(add_user);
         searchQuery.addValueEventListener(new ValueEventListener() {
             @Override
             public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
@@ -126,8 +151,10 @@ public class AddUserDialogFragment extends DialogFragment {
 
                 if(dataSnapshot.exists()) {
                     //Key exists
-                    // TODO: Also print the user name
-                    Log.d("User","User exists");
+                    // TODO: Also print the user name in UI
+                    String add_user_name = dataSnapshot.child(add_user).child("name").getValue().toString();
+
+                    Log.d("User","User exists " + add_user_name);
                     tv_user_text.setText("User verified");
                     iv_user_sign.setImageDrawable(ResourcesCompat.getDrawable(getResources(), R.drawable.ic_tick, null));
 
