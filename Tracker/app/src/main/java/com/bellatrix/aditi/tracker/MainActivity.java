@@ -6,21 +6,42 @@ import android.os.Bundle;
 import android.view.View;
 import android.view.Menu;
 import android.view.MenuItem;
+import android.widget.ExpandableListView;
 
+import androidx.annotation.NonNull;
 import androidx.appcompat.app.ActionBarDrawerToggle;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.widget.Toolbar;
+import androidx.core.content.ContextCompat;
 import androidx.core.view.GravityCompat;
 import androidx.drawerlayout.widget.DrawerLayout;
 
+import com.bellatrix.aditi.tracker.DatabaseClasses.UserMenuModel;
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
 import com.google.android.material.navigation.NavigationView;
 import com.google.android.material.snackbar.Snackbar;
+import com.google.firebase.database.DataSnapshot;
+import com.google.firebase.database.DatabaseError;
+import com.google.firebase.database.DatabaseReference;
+import com.google.firebase.database.FirebaseDatabase;
+import com.google.firebase.database.ValueEventListener;
+
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
 
 public class MainActivity extends AppCompatActivity
         implements NavigationView.OnNavigationItemSelectedListener {
 
     private String user;
+
+    ExpandableUserListAdapter expandableListAdapter;
+    ExpandableListView expandableListView;
+    List<UserMenuModel> headerList = new ArrayList<>();
+    HashMap<UserMenuModel, List<UserMenuModel>> childList = new HashMap<>();
+
+    private FirebaseDatabase firebaseDatabase;
+    private DatabaseReference databaseReference;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -39,6 +60,13 @@ public class MainActivity extends AppCompatActivity
                         .setAction("Action", null).show();
             }
         });
+
+        firebaseDatabase = FirebaseDatabase.getInstance();
+        databaseReference = firebaseDatabase.getReference();
+
+        expandableListView = findViewById(R.id.expandableListView);
+        prepareMenuData();
+        populateExpandableList();
 
         DrawerLayout drawer = (DrawerLayout) findViewById(R.id.drawer_layout);
         ActionBarDrawerToggle toggle = new ActionBarDrawerToggle(
@@ -97,23 +125,110 @@ public class MainActivity extends AppCompatActivity
         } else if (id == R.id.nav_manage) {
 
         } else if (id == R.id.add_user) {
-            // pop up add user dialog
-            AddUserDialogFragment addUserDialogFragment = AddUserDialogFragment.newInstance(user);;
-            addUserDialogFragment.show(getSupportFragmentManager(),"addUser");
 
         } else if (id == R.id.view_req) {
-            // show pending and sent requests
-            Intent intent = new Intent(this, ViewRequestsActivity.class);
-            intent.putExtra("user", user);
-            startActivity(intent);
 
         } else if (id == R.id.logout) {
-            goToLogin();
+
         }
 
         DrawerLayout drawer = (DrawerLayout) findViewById(R.id.drawer_layout);
         drawer.closeDrawer(GravityCompat.START);
         return true;
+    }
+
+    private void prepareMenuData() {
+
+        // initialize
+        final UserMenuModel userMenuModel1 = new UserMenuModel("View Location",null, true, true);
+        headerList.add(userMenuModel1);
+        childList.put(userMenuModel1, null);
+
+        UserMenuModel userMenuModel = new UserMenuModel("Add user",
+                ContextCompat.getDrawable(getApplicationContext(),R.drawable.ic_add_user),
+                true, false);
+        headerList.add(userMenuModel);
+        childList.put(userMenuModel, null);
+
+        userMenuModel = new UserMenuModel("View request",
+                ContextCompat.getDrawable(getApplicationContext(),R.drawable.ic_view_req),
+                true, false);
+        headerList.add(userMenuModel);
+        childList.put(userMenuModel, null);
+
+        userMenuModel = new UserMenuModel("Log Out",
+                ContextCompat.getDrawable(getApplicationContext(),R.drawable.ic_logout),
+                true, false);
+        headerList.add(userMenuModel);
+        childList.put(userMenuModel, null);
+
+        // TODO: experiment with child listener as well
+        databaseReference.child("users").child(user).child("seeing_of").addValueEventListener(new ValueEventListener() {
+            @Override
+            public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
+                // has a list of all the users seeing_of
+                List<UserMenuModel> childModelsList = new ArrayList<>();
+                for (DataSnapshot ds : dataSnapshot.getChildren()) {
+                    childModelsList.add(new UserMenuModel(ds.getKey(),null, false, false));
+                }
+
+                childList.replace(userMenuModel1, childModelsList);
+                populateExpandableList();
+            }
+
+            @Override
+            public void onCancelled(@NonNull DatabaseError databaseError) {
+
+            }
+        });
+
+
+    }
+
+    private void populateExpandableList() {
+
+        expandableListAdapter = new ExpandableUserListAdapter(this, headerList, childList);
+        expandableListView.setAdapter(expandableListAdapter);
+
+        expandableListView.setOnGroupClickListener(new ExpandableListView.OnGroupClickListener() {
+            @Override
+            public boolean onGroupClick(ExpandableListView parent, View v, int groupPosition, long id) {
+
+                if (headerList.get(groupPosition).isGroup) {
+                    if (!headerList.get(groupPosition).hasChildren) {
+
+                        String menu_item_name = headerList.get(groupPosition).menuName;
+
+                        if(menu_item_name.equals("Add user")) {
+                            // pop up add user dialog
+                            AddUserDialogFragment addUserDialogFragment = AddUserDialogFragment.newInstance(user);;
+                            addUserDialogFragment.show(getSupportFragmentManager(),"addUser");
+
+                        } else if(menu_item_name.equals("View request")) {
+                            // show pending and sent requests
+                            Intent intent = new Intent(MainActivity.this, ViewRequestsActivity.class);
+                            intent.putExtra("user", user);
+                            startActivity(intent);
+
+                        } else {    // log out
+                            goToLogin();
+                        }
+                        onBackPressed();
+
+                    }
+                }
+
+                return false;
+            }
+        });
+
+        expandableListView.setOnChildClickListener(new ExpandableListView.OnChildClickListener() {
+            @Override
+            public boolean onChildClick(ExpandableListView parent, View v, int groupPosition, int childPosition, long id) {
+
+                return false;
+            }
+        });
     }
 
     private void goToLogin() {
