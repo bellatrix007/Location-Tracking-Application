@@ -99,6 +99,8 @@ public class ExpandableUserListAdapter extends BaseExpandableListAdapter {
         lblListHeader.setTypeface(null, Typeface.BOLD);
         lblListHeader.setText(headerTitle);
         lblListImage.setImageDrawable(image);
+        if(image == null)
+            lblListImage.setVisibility(View.GONE);
 
         return convertView;
     }
