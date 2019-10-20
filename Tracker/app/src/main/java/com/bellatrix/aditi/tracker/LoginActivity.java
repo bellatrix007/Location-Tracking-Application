@@ -60,7 +60,7 @@ public class LoginActivity extends AppCompatActivity {
                     phoneet.setError("Enter Valid Phone number");
                 }
                 else {
-                    phone = "91" + phone;
+                    phone = "+91" + phone;
                     sendMsg();
                 }
             }
