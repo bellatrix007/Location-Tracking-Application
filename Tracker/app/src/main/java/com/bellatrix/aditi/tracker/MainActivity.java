@@ -296,6 +296,7 @@ public class MainActivity extends AppCompatActivity
             return;
 
         String key = dataSnapshot.getKey();
+        Log.d("Maps", key);
         double lat = Double.parseDouble(dataSnapshot.child("latitude").getValue().toString());
         double lng = Double.parseDouble(dataSnapshot.child("longitude").getValue().toString());
         if(mMarker == null)
@@ -307,6 +308,7 @@ public class MainActivity extends AppCompatActivity
             mMarker.setTitle(key);
             mMarker.setPosition(new LatLng(lat,lng));
         }
+        mMarker.showInfoWindow();
         mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(new LatLng(lat, lng), 7));
     }
 
