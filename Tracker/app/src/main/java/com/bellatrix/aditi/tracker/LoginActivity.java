@@ -13,6 +13,9 @@ import android.widget.Toast;
 import androidx.appcompat.app.AppCompatActivity;
 
 import com.bellatrix.aditi.tracker.Utils.CommonFunctions;
+import com.google.android.material.button.MaterialButton;
+import com.google.android.material.textfield.TextInputEditText;
+import com.google.android.material.textfield.TextInputLayout;
 import com.thrivecom.ringcaptcha.RingcaptchaAPIController;
 import com.thrivecom.ringcaptcha.RingcaptchaService;
 import com.thrivecom.ringcaptcha.lib.handlers.RingcaptchaHandler;
@@ -27,8 +30,8 @@ public class LoginActivity extends AppCompatActivity {
 
     private static final String APP_KEY = "7o7u6ugisi7ihu4e7e5i", API_KEY = "8d2460c22a50da072ec5b4a952215f500657882d";
 
-    private EditText phoneet, otpet;
-    private Button otpb, loginb;
+    private TextInputEditText phoneet,otpet;
+    private MaterialButton otpb, loginb;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -41,10 +44,10 @@ public class LoginActivity extends AppCompatActivity {
             goToHome();
         }
 
-        phoneet = (EditText) findViewById(R.id.textPhone);
-        otpet = (EditText) findViewById(R.id.textOTP);
-        otpb = (Button) findViewById(R.id.buttonOTP);
-        loginb = (Button) findViewById(R.id.buttonLogin);
+        phoneet = (TextInputEditText) findViewById(R.id.textPhone);
+        otpet = (TextInputEditText) findViewById(R.id.textOTP);
+        otpb = (MaterialButton) findViewById(R.id.buttonOTP);
+        loginb = (MaterialButton) findViewById(R.id.buttonLogin);
 
         controller = new RingcaptchaAPIController(APP_KEY);
 
@@ -52,7 +55,14 @@ public class LoginActivity extends AppCompatActivity {
             @Override
             public void onClick(View v) {
                 phone = phoneet.getText().toString();
-                sendMsg();
+                if(phone.length()!=10)
+                {
+                    phoneet.setError("Enter Valid Phone number");
+                }
+                else {
+                    phone = "91" + phone;
+                    sendMsg();
+                }
             }
         });
 
@@ -101,7 +111,8 @@ public class LoginActivity extends AppCompatActivity {
             //Called when the response is unsuccessful
             @Override
             public void onError(Exception e) {
-                Toast.makeText(LoginActivity.this, "Please check the number and try again!" , Toast.LENGTH_SHORT).show();
+                phoneet.setError("Number does not exists");
+                //Toast.makeText(LoginActivity.this, "Please check the number and try again!" , Toast.LENGTH_SHORT).show();
             }
         }, API_KEY);
     }
