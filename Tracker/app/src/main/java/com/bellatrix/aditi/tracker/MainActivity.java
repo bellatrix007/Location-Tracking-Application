@@ -289,22 +289,25 @@ public class MainActivity extends AppCompatActivity
         });
     }
 
-    // TODO: add cameraanimation
+    // TODO: add cameraanimation for specific bounds
     // TODO: add path from current user to the marker
     private void setMarker(DataSnapshot dataSnapshot) {
         if(mMap==null)
             return;
 
+        String key = dataSnapshot.getKey();
         double lat = Double.parseDouble(dataSnapshot.child("latitude").getValue().toString());
         double lng = Double.parseDouble(dataSnapshot.child("longitude").getValue().toString());
         if(mMarker == null)
         {
-            mMarker = mMap.addMarker(new MarkerOptions().position(new LatLng(lat, lng)));
+            mMarker = mMap.addMarker(new MarkerOptions().position(new LatLng(lat, lng)).title(key));
         }
         else
         {
+            mMarker.setTitle(key);
             mMarker.setPosition(new LatLng(lat,lng));
         }
+        mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(new LatLng(lat, lng), 7));
     }
 
     private void goToLogin() {
