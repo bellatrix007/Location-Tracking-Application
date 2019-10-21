@@ -60,6 +60,8 @@ public class MainActivity extends AppCompatActivity
 
     private GoogleMap mMap;
     private Marker mMarker;
+    private String prevKey;
+    private ValueEventListener markerListener;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -69,6 +71,7 @@ public class MainActivity extends AppCompatActivity
         setSupportActionBar(toolbar);
 
         user =  getSharedPreferences("login", MODE_PRIVATE).getString("user", "");
+        prevKey = "";
 
         FloatingActionButton fab = (FloatingActionButton) findViewById(R.id.fab);
         fab.setOnClickListener(new View.OnClickListener() {
@@ -276,7 +279,10 @@ public class MainActivity extends AppCompatActivity
     }
 
     private void setUpdates(String key) {
-        databaseReference.child("locations").child(key).addValueEventListener(new ValueEventListener() {
+        if(markerListener != null && !prevKey.equals("")) {
+            databaseReference.child("locations").child(prevKey).removeEventListener(markerListener);
+        }
+        markerListener = databaseReference.child("locations").child(key).addValueEventListener(new ValueEventListener() {
             @Override
             public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
                 setMarker(dataSnapshot);
@@ -287,6 +293,7 @@ public class MainActivity extends AppCompatActivity
 
             }
         });
+        prevKey = key;
     }
 
     // TODO: add cameraanimation for specific bounds
