@@ -1,8 +1,11 @@
 package com.bellatrix.aditi.tracker;
 
+import android.Manifest;
 import android.content.Intent;
 import android.content.SharedPreferences;
+import android.content.pm.PackageManager;
 import android.os.Bundle;
+import android.util.Log;
 import android.view.View;
 import android.view.Menu;
 import android.view.MenuItem;
@@ -12,14 +15,24 @@ import androidx.annotation.NonNull;
 import androidx.appcompat.app.ActionBarDrawerToggle;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.widget.Toolbar;
+import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
 import androidx.core.view.GravityCompat;
 import androidx.drawerlayout.widget.DrawerLayout;
 
 import com.bellatrix.aditi.tracker.DatabaseClasses.UserMenuModel;
+import com.google.android.gms.maps.CameraUpdateFactory;
+import com.google.android.gms.maps.GoogleMap;
+import com.google.android.gms.maps.OnMapReadyCallback;
+import com.google.android.gms.maps.SupportMapFragment;
+import com.google.android.gms.maps.model.LatLng;
+import com.google.android.gms.maps.model.LatLngBounds;
+import com.google.android.gms.maps.model.Marker;
+import com.google.android.gms.maps.model.MarkerOptions;
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
 import com.google.android.material.navigation.NavigationView;
 import com.google.android.material.snackbar.Snackbar;
+import com.google.firebase.database.ChildEventListener;
 import com.google.firebase.database.DataSnapshot;
 import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.DatabaseReference;
@@ -31,9 +44,11 @@ import java.util.HashMap;
 import java.util.List;
 
 public class MainActivity extends AppCompatActivity
-        implements NavigationView.OnNavigationItemSelectedListener {
+        implements NavigationView.OnNavigationItemSelectedListener, OnMapReadyCallback {
 
     private String user;
+
+    private static final int PERMISSION_LOCATION = 1234;
 
     ExpandableUserListAdapter expandableListAdapter;
     ExpandableListView expandableListView;
@@ -42,6 +57,9 @@ public class MainActivity extends AppCompatActivity
 
     private FirebaseDatabase firebaseDatabase;
     private DatabaseReference databaseReference;
+
+    private GoogleMap mMap;
+    private Marker mMarker;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -76,6 +94,26 @@ public class MainActivity extends AppCompatActivity
 
         NavigationView navigationView = (NavigationView) findViewById(R.id.nav_view);
         navigationView.setNavigationItemSelectedListener(this);
+
+        // Obtain the SupportMapFragment and get notified when the map is ready to be used.
+        SupportMapFragment mapFragment = (SupportMapFragment) getSupportFragmentManager()
+                .findFragmentById(R.id.map);
+        mapFragment.getMapAsync(this);
+    }
+
+    private void askPermission() {
+        if (ContextCompat.checkSelfPermission(this, android.Manifest.permission.ACCESS_FINE_LOCATION) ==
+                PackageManager.PERMISSION_GRANTED &&
+                ContextCompat.checkSelfPermission(this, android.Manifest.permission.ACCESS_COARSE_LOCATION) ==
+                        PackageManager.PERMISSION_GRANTED) {
+            mMap.setMyLocationEnabled(true);
+            mMap.getUiSettings().setMyLocationButtonEnabled(true);
+        } else {
+            ActivityCompat.requestPermissions(this, new String[] {
+                            Manifest.permission.ACCESS_FINE_LOCATION,
+                            Manifest.permission.ACCESS_COARSE_LOCATION },
+                    PERMISSION_LOCATION);
+        }
     }
 
     @Override
@@ -181,8 +219,6 @@ public class MainActivity extends AppCompatActivity
 
             }
         });
-
-
     }
 
     private void populateExpandableList() {
@@ -226,9 +262,49 @@ public class MainActivity extends AppCompatActivity
             @Override
             public boolean onChildClick(ExpandableListView parent, View v, int groupPosition, int childPosition, long id) {
 
-                return false;
+                if (childList.get(headerList.get(groupPosition)) != null) {
+                    UserMenuModel model = childList.get(headerList.get(groupPosition)).get(childPosition);
+                    if (model.menuName.length() > 0) {
+                        setUpdates(model.menuName);
+                        onBackPressed();
+                    }
+                }
+
+                return true;
             }
         });
+    }
+
+    private void setUpdates(String key) {
+        databaseReference.child("locations").child(key).addValueEventListener(new ValueEventListener() {
+            @Override
+            public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
+                setMarker(dataSnapshot);
+            }
+
+            @Override
+            public void onCancelled(@NonNull DatabaseError databaseError) {
+
+            }
+        });
+    }
+
+    // TODO: add cameraanimation
+    // TODO: add path from current user to the marker
+    private void setMarker(DataSnapshot dataSnapshot) {
+        if(mMap==null)
+            return;
+
+        double lat = Double.parseDouble(dataSnapshot.child("latitude").getValue().toString());
+        double lng = Double.parseDouble(dataSnapshot.child("longitude").getValue().toString());
+        if(mMarker == null)
+        {
+            mMarker = mMap.addMarker(new MarkerOptions().position(new LatLng(lat, lng)));
+        }
+        else
+        {
+            mMarker.setPosition(new LatLng(lat,lng));
+        }
     }
 
     private void goToLogin() {
@@ -238,5 +314,37 @@ public class MainActivity extends AppCompatActivity
         spEdit.putString("user", "");
         spEdit.apply();
         finish();
+    }
+
+    @Override
+    public void onMapReady(GoogleMap googleMap) {
+
+        Log.d("Maps","Ready");
+        mMap = googleMap;
+
+        // update the user's location
+        askPermission();
+    }
+
+    public void onRequestPermissionsResult(int requestCode,
+                                           String[] permissions, int[] grantResults) {
+        switch (requestCode) {
+            case PERMISSION_LOCATION: {
+                // If request is cancelled, the result arrays are empty.
+                if (grantResults.length > 0
+                        && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+                    mMap.setMyLocationEnabled(true);
+                    mMap.getUiSettings().setMyLocationButtonEnabled(true);
+                } else {
+                    askPermission();
+                }
+                return;
+            }
+        }
+    }
+
+    @Override
+    public void onPointerCaptureChanged(boolean hasCapture) {
+
     }
 }
