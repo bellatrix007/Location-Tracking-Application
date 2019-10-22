@@ -73,6 +73,28 @@ public class MainActivity extends AppCompatActivity
         user =  getSharedPreferences("login", MODE_PRIVATE).getString("user", "");
         prevKey = "";
 
+        firebaseDatabase = FirebaseDatabase.getInstance();
+        databaseReference = firebaseDatabase.getReference();
+
+        // check for new user
+        databaseReference.child("users").child(user).addValueEventListener(new ValueEventListener() {
+            @Override
+            public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
+                if(!dataSnapshot.exists()) {
+                    // show undismissable alert dialog to enter name
+                    // pop up register user dialog
+                    RegisterUserDialogFragment registerUserDialogFragment = RegisterUserDialogFragment.newInstance(user);
+                    registerUserDialogFragment.setCancelable(false);
+                    registerUserDialogFragment.show(getSupportFragmentManager(),"registerUser");
+                }
+            }
+
+            @Override
+            public void onCancelled(@NonNull DatabaseError databaseError) {
+
+            }
+        });
+
         // Check GPS is enabled
         LocationManager lm = (LocationManager) getSystemService(LOCATION_SERVICE);
         if (!lm.isProviderEnabled(LocationManager.GPS_PROVIDER)) {
@@ -91,9 +113,6 @@ public class MainActivity extends AppCompatActivity
                         .setAction("Action", null).show();
             }
         });
-
-        firebaseDatabase = FirebaseDatabase.getInstance();
-        databaseReference = firebaseDatabase.getReference();
 
         expandableListView = findViewById(R.id.expandableListView);
         prepareMenuData();
