@@ -1,5 +1,6 @@
 package com.bellatrix.aditi.tracker;
 
+import android.app.Activity;
 import android.app.Dialog;
 import android.content.DialogInterface;
 import android.os.Bundle;
@@ -86,5 +87,14 @@ public class RegisterUserDialogFragment extends DialogFragment {
         });
 
         return mAlertDialog;
+    }
+
+    @Override
+    public void onDismiss(DialogInterface dialog) {
+        super.onDismiss(dialog);
+        final Activity parentFragment = getActivity();
+        if (parentFragment instanceof DialogInterface.OnDismissListener) {
+            ((DialogInterface.OnDismissListener) parentFragment).onDismiss(dialog);
+        }
     }
 }
