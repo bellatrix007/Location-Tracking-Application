@@ -4,6 +4,7 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
+    android:weightSum="100"
     tools:context="com.bellatrix.aditi.tracker.LoginActivity">
 
 
@@ -11,7 +12,7 @@
         android:id="@+id/phoneLayout"
         android:layout_marginEnd="84dp"
         android:layout_marginStart="84dp"
-        android:layout_marginTop="130dp"
+        android:layout_marginTop="80dp"
         style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
         android:layout_width="250dp"
         android:layout_height="wrap_content"
@@ -58,7 +59,7 @@
         style="@style/Widget.MaterialComponents.Button.OutlinedButton"
         android:layout_width="250dp"
         android:layout_height="70dp"
-        android:layout_marginTop="100dp"
+        android:layout_marginTop="60dp"
         android:text="Send OTP"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
@@ -87,7 +88,7 @@
         android:shadowDy="5"
         android:shadowRadius="5"
         android:text="Tracker"
-        android:textSize="80sp"
+        android:textSize="70dp"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent" />
