@@ -1,6 +1,7 @@
 package com.bellatrix.aditi.tracker;
 
 import android.Manifest;
+import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
@@ -11,6 +12,7 @@ import android.view.View;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.widget.ExpandableListView;
+import android.widget.TextView;
 import android.widget.Toast;
 
 import androidx.annotation.NonNull;
@@ -44,9 +46,10 @@ import java.util.HashMap;
 import java.util.List;
 
 public class MainActivity extends AppCompatActivity
-        implements NavigationView.OnNavigationItemSelectedListener, OnMapReadyCallback {
+        implements NavigationView.OnNavigationItemSelectedListener, OnMapReadyCallback,
+        DialogInterface.OnDismissListener {
 
-    private String user;
+    private String user, user_name;
 
     private static final int PERMISSION_LOCATION = 1234;
 
@@ -86,6 +89,12 @@ public class MainActivity extends AppCompatActivity
                     RegisterUserDialogFragment registerUserDialogFragment = RegisterUserDialogFragment.newInstance(user);
                     registerUserDialogFragment.setCancelable(false);
                     registerUserDialogFragment.show(getSupportFragmentManager(),"registerUser");
+                } else {
+                    // fetch name and set in shared preferences
+                    user_name = dataSnapshot.child("name").getValue().toString();
+                    getSharedPreferences("login", MODE_PRIVATE).edit()
+                            .putString("user_name", user_name).apply();
+                    ((TextView)findViewById(R.id.tv_h1)).setText(user_name);
                 }
             }
 
@@ -408,5 +417,11 @@ public class MainActivity extends AppCompatActivity
 
     private void startTrackerService() {
         startService(new Intent(this, TrackerService.class));
+    }
+
+    @Override
+    public void onDismiss(DialogInterface dialogInterface) {
+        user_name = getSharedPreferences("login", MODE_PRIVATE).getString("user_name", "");
+        ((TextView)findViewById(R.id.tv_h1)).setText(user_name);
     }
 }
