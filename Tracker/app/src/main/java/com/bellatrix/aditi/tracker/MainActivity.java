@@ -77,7 +77,8 @@ public class MainActivity extends AppCompatActivity
 
     private GoogleMap mMap;
     private Marker mMarker;
-    private String prevKey;
+    private String prevKey, prevRinger;
+    private RequiredLocation prevLocation;
     private ValueEventListener markerListener;
 
     private RequiredLocation currLocation;
@@ -93,11 +94,11 @@ public class MainActivity extends AppCompatActivity
 
         user =  getSharedPreferences("login", MODE_PRIVATE).getString("user", "");
         prevKey = "";
+        prevRinger = "";
+        prevLocation = new RequiredLocation();
 
         firebaseDatabase = FirebaseDatabase.getInstance();
         databaseReference = firebaseDatabase.getReference();
-
-
 
         // check for new user
         databaseReference.child("users").child(user).addValueEventListener(new ValueEventListener() {
@@ -392,10 +393,35 @@ public class MainActivity extends AppCompatActivity
             if(mMap!=null)
                 mMap.setPadding(0,0,0,104);
         }
-        markerListener = databaseReference.child("locations").child(key).addValueEventListener(new ValueEventListener() {
+        markerListener = databaseReference.child("locations").child(key)
+                .addValueEventListener(new ValueEventListener() {
             @Override
             public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
-                setMarker(dataSnapshot);
+
+                String user_key = dataSnapshot.getKey();
+
+                // check if it is a ringer update
+                if(dataSnapshot.child("ringer").getValue()!=null) {
+
+                    String ringer = dataSnapshot.child("ringer").getValue().toString();
+                    if (!prevRinger.equals(ringer) || !prevKey.equals(user_key))    // new ringer info
+                    {
+                        // update ringer info
+
+                        prevRinger = ringer;
+                    }
+                }
+
+                // check if it is a location update
+                double lat = Double.parseDouble(dataSnapshot.child("latitude").getValue().toString());
+                double lng = Double.parseDouble(dataSnapshot.child("longitude").getValue().toString());
+                if(!(prevLocation.latitude==lat && prevLocation.longitude==lng)
+                        || !prevKey.equals(user_key))    // new location info
+                {
+                    // update location info
+                    prevLocation = new RequiredLocation(lat, lng);
+                    setMarker(user_key);
+                }
             }
 
             @Override
@@ -408,25 +434,25 @@ public class MainActivity extends AppCompatActivity
 
     // TODO: add cameraanimation for specific bounds
     // TODO: add path from current user to the marker
-    private void setMarker(DataSnapshot dataSnapshot) {
+    private void setMarker(String key) {
         if(mMap==null)
             return;
 
-        String key = dataSnapshot.getKey();
         Log.d("Maps", key);
-        double lat = Double.parseDouble(dataSnapshot.child("latitude").getValue().toString());
-        double lng = Double.parseDouble(dataSnapshot.child("longitude").getValue().toString());
+
         if(mMarker == null)
         {
-            mMarker = mMap.addMarker(new MarkerOptions().position(new LatLng(lat, lng)).title(key));
+            mMarker = mMap.addMarker(new MarkerOptions()
+                    .position(new LatLng(prevLocation.latitude, prevLocation.longitude)).title(key));
         }
         else
         {
             mMarker.setTitle(key);
-            mMarker.setPosition(new LatLng(lat,lng));
+            mMarker.setPosition(new LatLng(prevLocation.latitude, prevLocation.longitude));
         }
         mMarker.showInfoWindow();
-        mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(new LatLng(lat, lng), 7));
+        mMap.moveCamera(CameraUpdateFactory
+                .newLatLngZoom(new LatLng(prevLocation.latitude, prevLocation.longitude), 7));
     }
 
     private void goToLogin() {
