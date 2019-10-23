@@ -107,11 +107,6 @@ public class MainActivity extends AppCompatActivity
             }
         });
 
-        TextDrawable drawable = TextDrawable.builder()
-                .buildRect("A", Color.RED);
-        ImageView image = findViewById(R.id.avatar);
-        image.setImageDrawable(drawable);
-
         // Check GPS is enabled
         LocationManager lm = (LocationManager) getSystemService(LOCATION_SERVICE);
         if (!lm.isProviderEnabled(LocationManager.GPS_PROVIDER)) {
@@ -143,6 +138,12 @@ public class MainActivity extends AppCompatActivity
 
         NavigationView navigationView = (NavigationView) findViewById(R.id.nav_view);
         navigationView.setNavigationItemSelectedListener(this);
+
+        View headerLayout = navigationView.getHeaderView(0);
+        ImageView image = (ImageView) headerLayout.findViewById(R.id.avatar);
+        TextDrawable drawable = TextDrawable.builder()
+                .buildRect("A", Color.RED);
+        image.setImageDrawable(drawable);
     }
 
     private void askPermission() {
