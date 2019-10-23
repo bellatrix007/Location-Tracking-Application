@@ -24,6 +24,7 @@ public class TrackerService extends Service {
 
     private static final String TAG = TrackerService.class.getSimpleName();
     private String user;
+    private DatabaseReference ref;
 
     @Override
     public IBinder onBind(Intent intent) {return null; }
@@ -33,6 +34,8 @@ public class TrackerService extends Service {
         super.onCreate();
 
         user = getSharedPreferences("login", MODE_PRIVATE).getString("user", "");
+        ref = FirebaseDatabase.getInstance().getReference().child("locations").child(user);
+
         requestLocationUpdates();
     }
 
@@ -50,7 +53,6 @@ public class TrackerService extends Service {
             client.requestLocationUpdates(request, new LocationCallback() {
                 @Override
                 public void onLocationResult(LocationResult locationResult) {
-                    DatabaseReference ref = FirebaseDatabase.getInstance().getReference().child("locations").child(user);
                     Location location = locationResult.getLastLocation();
                     if (location != null) {
                         Log.d(TAG, "location update " + location);
@@ -61,5 +63,4 @@ public class TrackerService extends Service {
             }, null);
         }
     }
-
 }
