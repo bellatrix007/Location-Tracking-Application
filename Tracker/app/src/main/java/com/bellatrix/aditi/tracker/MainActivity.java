@@ -6,6 +6,7 @@ import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
 import android.graphics.Color;
+import android.location.Location;
 import android.location.LocationManager;
 import android.os.Bundle;
 import android.util.Log;
@@ -27,7 +28,13 @@ import androidx.core.view.GravityCompat;
 import androidx.drawerlayout.widget.DrawerLayout;
 
 import com.amulyakhare.textdrawable.TextDrawable;
+import com.bellatrix.aditi.tracker.DatabaseClasses.RequiredLocation;
 import com.bellatrix.aditi.tracker.DatabaseClasses.UserMenuModel;
+import com.google.android.gms.location.FusedLocationProviderClient;
+import com.google.android.gms.location.LocationCallback;
+import com.google.android.gms.location.LocationRequest;
+import com.google.android.gms.location.LocationResult;
+import com.google.android.gms.location.LocationServices;
 import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.OnMapReadyCallback;
@@ -68,6 +75,8 @@ public class MainActivity extends AppCompatActivity
     private Marker mMarker;
     private String prevKey;
     private ValueEventListener markerListener;
+
+    private RequiredLocation currLocation;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -153,6 +162,9 @@ public class MainActivity extends AppCompatActivity
                         PackageManager.PERMISSION_GRANTED) {
             // Start the service when the permission is granted
             startTrackerService();
+
+            // also start location extraction here
+            getCurrentLocation();
 
             if(mMap == null) {
                 // start the maps fragment
@@ -404,6 +416,9 @@ public class MainActivity extends AppCompatActivity
                     // Start the service when the permission is granted
                     startTrackerService();
 
+                    // also start location extraction here
+                    getCurrentLocation();
+
                     if(mMap == null) {
                         // start the maps fragment
                         // Obtain the SupportMapFragment and get notified when the map is ready to be used.
@@ -432,5 +447,60 @@ public class MainActivity extends AppCompatActivity
     public void onDismiss(DialogInterface dialogInterface) {
         user_name = getSharedPreferences("login", MODE_PRIVATE).getString("user_name", "");
         ((TextView)findViewById(R.id.tv_h1)).setText(user_name);
+    }
+
+    private void getCurrentLocation() {
+
+        // Location manager to get location
+//        LocationManager locationManager = (LocationManager) this.getSystemService(Context.LOCATION_SERVICE);
+//
+//        try {
+//            // Register the listener with the Location Manager to receive location updates
+//            locationManager.requestLocationUpdates(LocationManager.GPS_PROVIDER, 10000, 0.00001f, new LocationListener() {
+//                @Override
+//                public void onLocationChanged(Location location) {
+//
+//                }
+//
+//                @Override
+//                public void onStatusChanged(String s, int i, Bundle bundle) {
+//
+//                }
+//
+//                @Override
+//                public void onProviderEnabled(String s) {
+//
+//                }
+//
+//                @Override
+//                public void onProviderDisabled(String s) {
+//
+//                }
+//            });
+//        } catch (SecurityException e) {
+//            Log.d("Location manager","Locations permission denied: " + e.getMessage());
+//        }
+
+        LocationRequest request = new LocationRequest();
+        request.setInterval(30000);
+        request.setFastestInterval(10000);
+        request.setSmallestDisplacement(10);
+        request.setPriority(LocationRequest.PRIORITY_HIGH_ACCURACY);
+        FusedLocationProviderClient client = LocationServices.getFusedLocationProviderClient(this);
+        int permission = ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION);
+        if (permission == PackageManager.PERMISSION_GRANTED) {
+            // Request location updates and when an update is
+            // received, store the location in Firebase
+            client.requestLocationUpdates(request, new LocationCallback() {
+                @Override
+                public void onLocationResult(LocationResult locationResult) {
+                    Location location = locationResult.getLastLocation();
+                    if (location != null) {
+                        currLocation = new RequiredLocation(location.getLatitude(), location.getLongitude());
+                        Log.d("Location", currLocation.latitude + " " + currLocation.longitude);
+                    }
+                }
+            }, null);
+        }
     }
 }
