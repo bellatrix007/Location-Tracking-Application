@@ -97,6 +97,8 @@ public class MainActivity extends AppCompatActivity
         firebaseDatabase = FirebaseDatabase.getInstance();
         databaseReference = firebaseDatabase.getReference();
 
+
+
         // check for new user
         databaseReference.child("users").child(user).addValueEventListener(new ValueEventListener() {
             @Override
@@ -170,6 +172,26 @@ public class MainActivity extends AppCompatActivity
         TextDrawable drawable = TextDrawable.builder()
                 .buildRect("A", Color.RED);
         image.setImageDrawable(drawable);
+
+        // listener for update ringer request
+        databaseReference.child("users").child(user).orderByKey().equalTo("update_ringer")
+                .addValueEventListener(new ValueEventListener() {
+            @Override
+            public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
+                if(dataSnapshot.exists()) {
+                    Log.d("Ringer", "request by "
+                            + dataSnapshot.child("update_ringer").getValue());
+                    requestRingerUpdates();
+                    // also remove the request
+                    dataSnapshot.child("update_ringer").getRef().removeValue();
+                }
+            }
+
+            @Override
+            public void onCancelled(@NonNull DatabaseError databaseError) {
+
+            }
+        });
     }
 
     private void askPermission() {
@@ -531,13 +553,13 @@ public class MainActivity extends AppCompatActivity
 
         switch (mobilemode.getRingerMode()) {
             case AudioManager.RINGER_MODE_SILENT:
-                databaseReference.child("locations").child(prevKey).child("ringer").setValue("Silent mode");
+                databaseReference.child("locations").child(user).child("ringer").setValue("Silent mode");
                 break;
             case AudioManager.RINGER_MODE_VIBRATE:
-                databaseReference.child("locations").child(prevKey).child("ringer").setValue("Vibrate mode");
+                databaseReference.child("locations").child(user).child("ringer").setValue("Vibrate mode");
                 break;
             case AudioManager.RINGER_MODE_NORMAL:
-                databaseReference.child("locations").child(prevKey).child("ringer")
+                databaseReference.child("locations").child(user).child("ringer")
                         .setValue("Normal mode: " + mobilemode.getStreamVolume(AudioManager.STREAM_RING));
                 break;
         }
