@@ -83,7 +83,7 @@ public class MainActivity extends AppCompatActivity
 
     private RequiredLocation currLocation;
 
-    private ImageButton refreshRinger;
+    private ImageButton refreshRinger, updateRinger;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -139,6 +139,17 @@ public class MainActivity extends AppCompatActivity
         refreshRinger.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
+                // request for refresh ringer of a user in prevKey
+                if(!prevKey.equals("")) {
+                    databaseReference.child("users").child(prevKey).child("refresh_ringer").setValue(user);
+                }
+            }
+        });
+
+        updateRinger = (ImageButton) findViewById(R.id.update_ringer);
+        updateRinger.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
                 // request for ringer update of a user in prevKey
                 if(!prevKey.equals("")) {
                     databaseReference.child("users").child(prevKey).child("update_ringer").setValue(user);
@@ -174,15 +185,39 @@ public class MainActivity extends AppCompatActivity
                 .buildRect("A", Color.RED);
         image.setImageDrawable(drawable);
 
-        // listener for update ringer request
+        // listener for refresh ringer request
+        databaseReference.child("users").child(user).orderByKey().equalTo("refresh_ringer")
+                .addValueEventListener(new ValueEventListener() {
+            @Override
+            public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
+                if(dataSnapshot.exists()) {
+                    Log.d("Ringer", "Refresh request by "
+                            + dataSnapshot.child("refresh_ringer").getValue());
+                    requestRingerUpdates();
+                    // also remove the request
+                    dataSnapshot.child("refresh_ringer").getRef().removeValue();
+                }
+            }
+
+            @Override
+            public void onCancelled(@NonNull DatabaseError databaseError) {
+
+            }
+        });
+
+        // listener for refresh ringer request
         databaseReference.child("users").child(user).orderByKey().equalTo("update_ringer")
                 .addValueEventListener(new ValueEventListener() {
             @Override
             public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
                 if(dataSnapshot.exists()) {
-                    Log.d("Ringer", "request by "
+                    Log.d("Ringer", "Update request by "
                             + dataSnapshot.child("update_ringer").getValue());
-                    requestRingerUpdates();
+
+                    // change the volume to max
+                    AudioManager audioManager = ((AudioManager)getSystemService(Context.AUDIO_SERVICE));
+                    audioManager.setStreamVolume(AudioManager.STREAM_RING,
+                            audioManager.getStreamMaxVolume(AudioManager.STREAM_RING),0);
                     // also remove the request
                     dataSnapshot.child("update_ringer").getRef().removeValue();
                 }
@@ -407,8 +442,8 @@ public class MainActivity extends AppCompatActivity
                     if (!prevRinger.equals(ringer) || !prevKey.equals(user_key))    // new ringer info
                     {
                         // update ringer info
-
                         prevRinger = ringer;
+                        // TODO: hook up UI
                     }
                 }
 
@@ -575,7 +610,7 @@ public class MainActivity extends AppCompatActivity
 
     private void requestRingerUpdates() {
 
-        AudioManager mobilemode = (AudioManager)getApplication().getSystemService(Context.AUDIO_SERVICE);
+        AudioManager mobilemode = (AudioManager)getSystemService(Context.AUDIO_SERVICE);
 
         switch (mobilemode.getRingerMode()) {
             case AudioManager.RINGER_MODE_SILENT:
