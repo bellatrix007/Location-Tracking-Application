@@ -84,7 +84,7 @@ public class MainActivity extends AppCompatActivity
 
     private GoogleMap mMap;
     private Marker mMarker;
-    private String prevKey, prevRinger;
+    private String mDirectionMode, prevKey, prevRinger;
     private boolean oldUser;
     private LatLng prevLocation;
     private ValueEventListener markerListener;
@@ -102,6 +102,7 @@ public class MainActivity extends AppCompatActivity
         setSupportActionBar(toolbar);
 
         user =  getSharedPreferences("login", MODE_PRIVATE).getString("user", "");
+        mDirectionMode = "driving";
         prevKey = "";
         prevRinger = "";
         oldUser = false;
@@ -483,7 +484,7 @@ public class MainActivity extends AppCompatActivity
         mMarker.showInfoWindow();
         updateCameraBounds();
         new FetchURL(MainActivity.this)
-                .execute(getUrl(currLocation, prevLocation, "driving"), "driving");
+                .execute(getUrl(currLocation, prevLocation, mDirectionMode), mDirectionMode);
     }
 
     private String getUrl(LatLng origin, LatLng dest, String directionMode) {
@@ -636,7 +637,7 @@ public class MainActivity extends AppCompatActivity
 
                         if(prevLocation!=null)
                             new FetchURL(MainActivity.this)
-                                    .execute(getUrl(currLocation, prevLocation, "driving"), "driving");
+                                    .execute(getUrl(currLocation, prevLocation, mDirectionMode), mDirectionMode);
                     }
                 }
             }, null);
