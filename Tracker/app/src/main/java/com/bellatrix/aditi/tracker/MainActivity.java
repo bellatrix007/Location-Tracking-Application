@@ -33,7 +33,6 @@ import androidx.core.view.GravityCompat;
 import androidx.drawerlayout.widget.DrawerLayout;
 
 import com.amulyakhare.textdrawable.TextDrawable;
-import com.bellatrix.aditi.tracker.DatabaseClasses.RequiredLocation;
 import com.bellatrix.aditi.tracker.DatabaseClasses.UserMenuModel;
 import com.google.android.gms.location.FusedLocationProviderClient;
 import com.google.android.gms.location.LocationCallback;
@@ -45,6 +44,7 @@ import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.OnMapReadyCallback;
 import com.google.android.gms.maps.SupportMapFragment;
 import com.google.android.gms.maps.model.LatLng;
+import com.google.android.gms.maps.model.LatLngBounds;
 import com.google.android.gms.maps.model.Marker;
 import com.google.android.gms.maps.model.MarkerOptions;
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
@@ -81,10 +81,11 @@ public class MainActivity extends AppCompatActivity
     private GoogleMap mMap;
     private Marker mMarker;
     private String prevKey, prevRinger;
-    private RequiredLocation prevLocation;
+    private boolean oldUser;
+    private LatLng prevLocation;
     private ValueEventListener markerListener;
 
-    private RequiredLocation currLocation;
+    private LatLng currLocation;
 
     private ImageButton refreshRinger, updateRinger;
 
@@ -98,7 +99,7 @@ public class MainActivity extends AppCompatActivity
         user =  getSharedPreferences("login", MODE_PRIVATE).getString("user", "");
         prevKey = "";
         prevRinger = "";
-        prevLocation = new RequiredLocation();
+        oldUser = false;
 
         firebaseDatabase = FirebaseDatabase.getInstance();
         databaseReference = firebaseDatabase.getReference();
@@ -299,24 +300,7 @@ public class MainActivity extends AppCompatActivity
     @SuppressWarnings("StatementWithEmptyBody")
     @Override
     public boolean onNavigationItemSelected(MenuItem item) {
-        // Handle navigation view item clicks here.
-        int id = item.getItemId();
-
-        if (id == R.id.nav_camera) {
-            // Handle the camera action
-        } else if (id == R.id.nav_gallery) {
-
-        } else if (id == R.id.nav_slideshow) {
-
-        } else if (id == R.id.nav_manage) {
-
-        } else if (id == R.id.add_user) {
-
-        } else if (id == R.id.view_req) {
-
-        } else if (id == R.id.logout) {
-
-        }
+        // No nedd to Handle navigation view item.
 
         DrawerLayout drawer = (DrawerLayout) findViewById(R.id.drawer_layout);
         drawer.closeDrawer(GravityCompat.START);
@@ -438,11 +422,14 @@ public class MainActivity extends AppCompatActivity
 
                 String user_key = dataSnapshot.getKey();
 
+                if(prevKey.equals(user_key))
+                    oldUser = true;
+
                 // check if it is a ringer update
                 if(dataSnapshot.child("ringer").getValue()!=null) {
 
                     String ringer = dataSnapshot.child("ringer").getValue().toString();
-                    if (!prevRinger.equals(ringer) || !prevKey.equals(user_key))    // new ringer info
+                    if (!prevRinger.equals(ringer) || !oldUser)    // new ringer info
                     {
                         // update ringer info
                         prevRinger = ringer;
@@ -453,13 +440,15 @@ public class MainActivity extends AppCompatActivity
                 // check if it is a location update
                 double lat = Double.parseDouble(dataSnapshot.child("latitude").getValue().toString());
                 double lng = Double.parseDouble(dataSnapshot.child("longitude").getValue().toString());
-                if(!(prevLocation.latitude==lat && prevLocation.longitude==lng)
-                        || !prevKey.equals(user_key))    // new location info
+                if(prevLocation==null || !(prevLocation.latitude==lat && prevLocation.longitude==lng)
+                        || !oldUser)    // new location info
                 {
                     // update location info
-                    prevLocation = new RequiredLocation(lat, lng);
+                    prevLocation = new LatLng(lat, lng);
                     setMarker(user_key);
                 }
+
+                prevKey = user_key;
             }
 
             @Override
@@ -467,10 +456,8 @@ public class MainActivity extends AppCompatActivity
 
             }
         });
-        prevKey = key;
     }
 
-    // TODO: add cameraanimation for specific bounds
     // TODO: add path from current user to the marker
     private void setMarker(String key) {
         if(mMap==null)
@@ -481,16 +468,15 @@ public class MainActivity extends AppCompatActivity
         if(mMarker == null)
         {
             mMarker = mMap.addMarker(new MarkerOptions()
-                    .position(new LatLng(prevLocation.latitude, prevLocation.longitude)).title(key));
+                    .position(prevLocation).title(key));
         }
         else
         {
             mMarker.setTitle(key);
-            mMarker.setPosition(new LatLng(prevLocation.latitude, prevLocation.longitude));
+            mMarker.setPosition(prevLocation);
         }
         mMarker.showInfoWindow();
-        mMap.moveCamera(CameraUpdateFactory
-                .newLatLngZoom(new LatLng(prevLocation.latitude, prevLocation.longitude), 7));
+        updateCameraBounds();
     }
 
     private void goToLogin() {
@@ -621,11 +607,35 @@ public class MainActivity extends AppCompatActivity
                 public void onLocationResult(LocationResult locationResult) {
                     Location location = locationResult.getLastLocation();
                     if (location != null) {
-                        currLocation = new RequiredLocation(location.getLatitude(), location.getLongitude());
+                        currLocation = new LatLng(location.getLatitude(), location.getLongitude());
                         Log.d("Location", currLocation.latitude + " " + currLocation.longitude);
+
+                        updateCameraBounds();
                     }
                 }
             }, null);
+        }
+    }
+
+    private void updateCameraBounds() {
+        if(mMap==null)
+            return;
+
+        // initial user's location only
+        if(prevLocation==null) {
+            mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(currLocation, 15));
+        } else {
+            // set bounds if a new user
+            if(!oldUser) {
+                Log.d("animate", "true" + prevKey);
+                LatLngBounds.Builder builder = new LatLngBounds.Builder();
+                builder.include(currLocation);
+                builder.include(prevLocation);
+                mMap.animateCamera(CameraUpdateFactory.newLatLngBounds(builder.build(), 20));
+            } else {
+                Log.d("animate", "false" + prevKey);
+                mMap.animateCamera(CameraUpdateFactory.newLatLng(prevLocation));
+            }
         }
     }
 
