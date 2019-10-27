@@ -41,6 +41,13 @@
             android:exported="true">
         </service>
 
+        <receiver
+            android:name=".TrackerRestarterBroadcastReceiver"
+            android:enabled="true"
+            android:exported="true"
+            android:label="RestartServiceWhenStopped">
+        </receiver>
+
     </application>
 
 </manifest>

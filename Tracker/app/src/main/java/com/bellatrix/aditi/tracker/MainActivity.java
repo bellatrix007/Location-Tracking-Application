@@ -1,6 +1,7 @@
 package com.bellatrix.aditi.tracker;
 
 import android.Manifest;
+import android.app.ActivityManager;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
@@ -74,6 +75,8 @@ public class MainActivity extends AppCompatActivity
 
     private FirebaseDatabase firebaseDatabase;
     private DatabaseReference databaseReference;
+
+    private Intent trackerServiceIntent;
 
     private GoogleMap mMap;
     private Marker mMarker;
@@ -544,7 +547,25 @@ public class MainActivity extends AppCompatActivity
     }
 
     private void startTrackerService() {
-        startService(new Intent(this, TrackerService.class));
+        trackerServiceIntent = new Intent(this, TrackerService.class);
+
+        if (!isMyServiceRunning()) {
+            startService(trackerServiceIntent);
+        }
+    }
+
+    private boolean isMyServiceRunning() {
+        TrackerService trackerService = new TrackerService(this);
+
+        ActivityManager manager = (ActivityManager) getSystemService(Context.ACTIVITY_SERVICE);
+        for (ActivityManager.RunningServiceInfo service : manager.getRunningServices(Integer.MAX_VALUE)) {
+            if (trackerService.getClass().equals(service.service.getClassName())) {
+                Log.i ("isMyServiceRunning?", true+"");
+                return true;
+            }
+        }
+        Log.i ("isMyServiceRunning?", false+"");
+        return false;
     }
 
     @Override
@@ -624,5 +645,16 @@ public class MainActivity extends AppCompatActivity
                         .setValue("Normal mode: " + mobilemode.getStreamVolume(AudioManager.STREAM_RING));
                 break;
         }
+    }
+
+    // if we do not stop it, the service will die with our app.
+    // Instead, by stopping the service,
+    // we will force the service to call its own onDestroy which will force it to recreate itself
+    // after the app is dead.
+    @Override
+    protected void onDestroy() {
+        stopService(trackerServiceIntent);
+        Log.d("Service", "ondestroy of activity!");
+        super.onDestroy();
     }
 }
