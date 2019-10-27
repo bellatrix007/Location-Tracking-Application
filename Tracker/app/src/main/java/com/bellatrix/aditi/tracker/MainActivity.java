@@ -34,6 +34,8 @@ import androidx.drawerlayout.widget.DrawerLayout;
 
 import com.amulyakhare.textdrawable.TextDrawable;
 import com.bellatrix.aditi.tracker.DatabaseClasses.UserMenuModel;
+import com.bellatrix.aditi.tracker.Utils.FetchURL;
+import com.bellatrix.aditi.tracker.Utils.TaskLoadedCallback;
 import com.google.android.gms.location.FusedLocationProviderClient;
 import com.google.android.gms.location.LocationCallback;
 import com.google.android.gms.location.LocationRequest;
@@ -47,6 +49,8 @@ import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.LatLngBounds;
 import com.google.android.gms.maps.model.Marker;
 import com.google.android.gms.maps.model.MarkerOptions;
+import com.google.android.gms.maps.model.Polyline;
+import com.google.android.gms.maps.model.PolylineOptions;
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
 import com.google.android.material.navigation.NavigationView;
 import com.google.android.material.snackbar.Snackbar;
@@ -62,7 +66,7 @@ import java.util.List;
 
 public class MainActivity extends AppCompatActivity
         implements NavigationView.OnNavigationItemSelectedListener, OnMapReadyCallback,
-        DialogInterface.OnDismissListener {
+        DialogInterface.OnDismissListener, TaskLoadedCallback {
 
     private String user, user_name;
 
@@ -84,6 +88,7 @@ public class MainActivity extends AppCompatActivity
     private boolean oldUser;
     private LatLng prevLocation;
     private ValueEventListener markerListener;
+    private Polyline mPolyline;
 
     private LatLng currLocation;
 
@@ -467,8 +472,7 @@ public class MainActivity extends AppCompatActivity
 
         if(mMarker == null)
         {
-            mMarker = mMap.addMarker(new MarkerOptions()
-                    .position(prevLocation).title(key));
+            mMarker = mMap.addMarker(new MarkerOptions().position(prevLocation).title(key));
         }
         else
         {
@@ -477,6 +481,24 @@ public class MainActivity extends AppCompatActivity
         }
         mMarker.showInfoWindow();
         updateCameraBounds();
+        new FetchURL(MainActivity.this)
+                .execute(getUrl(currLocation, prevLocation, "driving"), "driving");
+    }
+
+    private String getUrl(LatLng origin, LatLng dest, String directionMode) {
+        // Origin of route
+        String str_origin = "origin=" + origin.latitude + "," + origin.longitude;
+        // Destination of route
+        String str_dest = "destination=" + dest.latitude + "," + dest.longitude;
+        // Mode
+        String mode = "mode=" + directionMode;
+        // Building the parameters to the web service
+        String parameters = str_origin + "&" + str_dest + "&" + mode;
+        // Output format
+        String output = "json";
+        // Building the url to the web service
+        String url = "https://maps.googleapis.com/maps/api/directions/" + output + "?" + parameters + "&key=" + getString(R.string.google_maps_key);
+        return url;
     }
 
     private void goToLogin() {
@@ -609,8 +631,11 @@ public class MainActivity extends AppCompatActivity
                     if (location != null) {
                         currLocation = new LatLng(location.getLatitude(), location.getLongitude());
                         Log.d("Location", currLocation.latitude + " " + currLocation.longitude);
-
                         updateCameraBounds();
+
+                        if(prevLocation!=null)
+                            new FetchURL(MainActivity.this)
+                                    .execute(getUrl(currLocation, prevLocation, "driving"), "driving");
                     }
                 }
             }, null);
@@ -655,6 +680,14 @@ public class MainActivity extends AppCompatActivity
                         .setValue("Normal mode: " + mobilemode.getStreamVolume(AudioManager.STREAM_RING));
                 break;
         }
+    }
+
+    @Override
+    public void onTaskDone(Object... values) {
+        if (mPolyline != null)
+            mPolyline.remove();
+        mPolyline = mMap.addPolyline((PolylineOptions) values[0]);
+
     }
 
     // if we do not stop it, the service will die with our app.
