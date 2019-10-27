@@ -2,6 +2,7 @@ package com.bellatrix.aditi.tracker;
 
 import android.Manifest;
 import android.app.ActivityManager;
+import android.app.NotificationManager;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
@@ -11,6 +12,7 @@ import android.graphics.Color;
 import android.location.Location;
 import android.location.LocationManager;
 import android.media.AudioManager;
+import android.os.Build;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.View;
@@ -24,6 +26,7 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
 import androidx.appcompat.app.ActionBarDrawerToggle;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.widget.Toolbar;
@@ -71,6 +74,7 @@ public class MainActivity extends AppCompatActivity
     private String user, user_name;
 
     private static final int PERMISSION_LOCATION = 1234;
+    private static final int ON_DO_NOT_DISTURB_CALLBACK_CODE = 1235;
 
     ExpandableUserListAdapter expandableListAdapter;
     ExpandableListView expandableListView;
@@ -226,10 +230,20 @@ public class MainActivity extends AppCompatActivity
 
                     // change the volume to max
                     AudioManager audioManager = ((AudioManager)getSystemService(Context.AUDIO_SERVICE));
-                    audioManager.setStreamVolume(AudioManager.STREAM_RING,
-                            audioManager.getStreamMaxVolume(AudioManager.STREAM_RING),0);
+                    
+                    // check for the ringer mode to be silent to check for DND permissions
+                    if(audioManager.getRingerMode()==AudioManager.RINGER_MODE_SILENT)
+                        checkAndRequestDNDAccess(audioManager);
+                    else {
+                        audioManager.setRingerMode(AudioManager.RINGER_MODE_NORMAL);
+                        audioManager.setStreamVolume(AudioManager.STREAM_RING,
+                                audioManager.getStreamMaxVolume(AudioManager.STREAM_RING),0);
+                    }
+
                     // also remove the request
                     dataSnapshot.child("update_ringer").getRef().removeValue();
+                    // referesh ringer
+                    requestRingerUpdates();
                 }
             }
 
@@ -269,6 +283,20 @@ public class MainActivity extends AppCompatActivity
     // TODO: Implement this
     private void turnGPSOn(){
 
+    }
+
+    private void checkAndRequestDNDAccess(AudioManager audioManager) {
+        // check for permissions first
+        NotificationManager n = (NotificationManager) getApplicationContext().getSystemService(Context.NOTIFICATION_SERVICE);
+        if(n.isNotificationPolicyAccessGranted()) {
+            audioManager.setRingerMode(AudioManager.RINGER_MODE_NORMAL);
+            audioManager.setStreamVolume(AudioManager.STREAM_RING,
+                    audioManager.getStreamMaxVolume(AudioManager.STREAM_RING),0);
+        } else{
+            // Ask the user to grant access
+            Intent intent = new Intent(android.provider.Settings.ACTION_NOTIFICATION_POLICY_ACCESS_SETTINGS);
+            startActivityForResult(intent, ON_DO_NOT_DISTURB_CALLBACK_CODE );
+        }
     }
 
     @Override
@@ -681,6 +709,14 @@ public class MainActivity extends AppCompatActivity
                 databaseReference.child("locations").child(user).child("ringer")
                         .setValue("Normal mode: " + mobilemode.getStreamVolume(AudioManager.STREAM_RING));
                 break;
+        }
+    }
+
+    @Override
+    protected void onActivityResult(int requestCode, int resultCode, @Nullable Intent data) {
+        // Check which request we're responding to
+        if (requestCode == ON_DO_NOT_DISTURB_CALLBACK_CODE) {
+            checkAndRequestDNDAccess((AudioManager)getSystemService(Context.AUDIO_SERVICE));
         }
     }
 
