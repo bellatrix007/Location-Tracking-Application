@@ -463,7 +463,8 @@ public class MainActivity extends AppCompatActivity
         });
     }
 
-    // TODO: add path from current user to the marker
+    // TODO: see other direction modes also
+    // TODO: distance and time
     private void setMarker(String key) {
         if(mMap==null)
             return;
