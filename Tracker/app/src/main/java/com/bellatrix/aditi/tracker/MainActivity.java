@@ -130,6 +130,8 @@ public class MainActivity extends AppCompatActivity
                     getSharedPreferences("login", MODE_PRIVATE).edit()
                             .putString("user_name", user_name).apply();
                     ((TextView)findViewById(R.id.tv_h1)).setText(user_name);
+                   // user =  getSharedPreferences("login", MODE_PRIVATE).getString("user", "");
+                    ((TextView)findViewById(R.id.tv_h2)).setText(user);
                 }
             }
 
@@ -194,10 +196,10 @@ public class MainActivity extends AppCompatActivity
         navigationView.setNavigationItemSelectedListener(this);
 
         View headerLayout = navigationView.getHeaderView(0);
-        ImageView image = (ImageView) headerLayout.findViewById(R.id.avatar);
-        TextDrawable drawable = TextDrawable.builder()
-                .buildRect("A", Color.RED);
-        image.setImageDrawable(drawable);
+//        ImageView image = (ImageView) headerLayout.findViewById(R.id.avatar);
+//        TextDrawable drawable = TextDrawable.builder()
+//                .buildRect("A", Color.RED);
+//        image.setImageDrawable(drawable);
 
         // listener for refresh ringer request
         databaseReference.child("users").child(user).orderByKey().equalTo("refresh_ringer")
@@ -609,7 +611,10 @@ public class MainActivity extends AppCompatActivity
     @Override
     public void onDismiss(DialogInterface dialogInterface) {
         user_name = getSharedPreferences("login", MODE_PRIVATE).getString("user_name", "");
+
         ((TextView)findViewById(R.id.tv_h1)).setText(user_name);
+        ((TextView)findViewById(R.id.tv_h2)).setText(user);
+
     }
 
     private void getCurrentLocation() {
