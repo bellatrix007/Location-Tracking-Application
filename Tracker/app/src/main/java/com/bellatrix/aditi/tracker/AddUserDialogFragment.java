@@ -158,7 +158,7 @@ public class AddUserDialogFragment extends DialogFragment {
                     add_user_name = dataSnapshot.child(add_user).child("name").getValue().toString();
 
                     Log.d("User","User exists " + add_user_name);
-                    tv_user_text.setText("User verified");
+                    tv_user_text.setText(add_user_name );
                     iv_user_sign.setImageDrawable(ResourcesCompat.getDrawable(getResources(), R.drawable.ic_tick, null));
 
                 } else {

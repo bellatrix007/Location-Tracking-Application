@@ -9,6 +9,7 @@ import android.view.ViewGroup;
 import android.widget.BaseExpandableListAdapter;
 import android.widget.ImageView;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import com.bellatrix.aditi.tracker.DatabaseClasses.UserMenuModel;
 
@@ -42,7 +43,7 @@ public class ExpandableUserListAdapter extends BaseExpandableListAdapter {
     public View getChildView(int groupPosition, final int childPosition,
                              boolean isLastChild, View convertView, ViewGroup parent) {
 
-        final String childText = getChild(groupPosition, childPosition).menuName;
+        final String childText = getChild(groupPosition, childPosition).displayName;
 
         if (convertView == null) {
             LayoutInflater infalInflater = (LayoutInflater) this.context
@@ -86,7 +87,7 @@ public class ExpandableUserListAdapter extends BaseExpandableListAdapter {
     @Override
     public View getGroupView(int groupPosition, boolean isExpanded,
                              View convertView, ViewGroup parent) {
-        String headerTitle = getGroup(groupPosition).menuName;
+        String headerTitle = getGroup(groupPosition).displayName;
         Drawable image = getGroup(groupPosition).image;
         if (convertView == null) {
             LayoutInflater infalInflater = (LayoutInflater) this.context

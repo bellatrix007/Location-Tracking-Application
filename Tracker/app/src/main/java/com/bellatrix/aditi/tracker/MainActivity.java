@@ -346,7 +346,7 @@ public class MainActivity extends AppCompatActivity
     private void prepareMenuData() {
 
         // initialize
-        final UserMenuModel userMenuModel1 = new UserMenuModel("View Location",null, true, true);
+        final UserMenuModel userMenuModel1 = new UserMenuModel("View Location",ContextCompat.getDrawable(getApplicationContext(),R.drawable.ic_location), true, true);
         headerList.add(userMenuModel1);
         childList.put(userMenuModel1, null);
 
@@ -375,7 +375,7 @@ public class MainActivity extends AppCompatActivity
                 // has a list of all the users seeing_of
                 List<UserMenuModel> childModelsList = new ArrayList<>();
                 for (DataSnapshot ds : dataSnapshot.getChildren()) {
-                    childModelsList.add(new UserMenuModel(ds.getKey(),null, false, false));
+                    childModelsList.add(new UserMenuModel(ds.getKey(), ds.getValue().toString(),null, false, false));
                 }
 
                 childList.replace(userMenuModel1, childModelsList);
@@ -433,7 +433,8 @@ public class MainActivity extends AppCompatActivity
                 if (childList.get(headerList.get(groupPosition)) != null) {
                     UserMenuModel model = childList.get(headerList.get(groupPosition)).get(childPosition);
                     if (model.menuName.length() > 0) {
-                        setUpdates(model.menuName);
+                        setUpdates(model.menuName, model.displayName);
+                        Log.d("marker",model.displayName);
                         onBackPressed();
                     }
                 }
@@ -443,7 +444,7 @@ public class MainActivity extends AppCompatActivity
         });
     }
 
-    private void setUpdates(String key) {
+    private void setUpdates(String key,final String marker_title) {
         if(markerListener != null && !prevKey.equals("")) {
             databaseReference.child("locations").child(prevKey).removeEventListener(markerListener);
         } else {
@@ -457,7 +458,6 @@ public class MainActivity extends AppCompatActivity
             public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
 
                 String user_key = dataSnapshot.getKey();
-
                 if(prevKey.equals(user_key))
                     oldUser = true;
 
@@ -481,7 +481,8 @@ public class MainActivity extends AppCompatActivity
                 {
                     // update location info
                     prevLocation = new LatLng(lat, lng);
-                    setMarker(user_key);
+                    Log.d("setupdate",marker_title);
+                    setMarker(user_key,marker_title);
                 }
 
                 prevKey = user_key;
@@ -496,7 +497,7 @@ public class MainActivity extends AppCompatActivity
 
     // TODO: see other direction modes also
     // TODO: distance and time
-    private void setMarker(String key) {
+    private void setMarker(String key,String marker_title) {
         if(mMap==null)
             return;
 
@@ -508,7 +509,7 @@ public class MainActivity extends AppCompatActivity
         }
         else
         {
-            mMarker.setTitle(key);
+            mMarker.setTitle(marker_title);
             mMarker.setPosition(prevLocation);
         }
         mMarker.showInfoWindow();
@@ -652,7 +653,7 @@ public class MainActivity extends AppCompatActivity
         LocationRequest request = new LocationRequest();
         request.setInterval(30000);
         request.setFastestInterval(10000);
-        request.setSmallestDisplacement(10);
+        request.setSmallestDisplacement(1);
         request.setPriority(LocationRequest.PRIORITY_HIGH_ACCURACY);
         FusedLocationProviderClient client = LocationServices.getFusedLocationProviderClient(this);
         int permission = ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION);
@@ -715,6 +716,7 @@ public class MainActivity extends AppCompatActivity
                         .setValue("Normal mode: " + mobilemode.getStreamVolume(AudioManager.STREAM_RING));
                 break;
         }
+//        Toast.makeText(this,"user","1000")
     }
 
     @Override
