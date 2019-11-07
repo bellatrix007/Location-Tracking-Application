@@ -10,10 +10,12 @@ import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.graphics.Color;
 import android.location.Location;
+import android.media.AudioManager;
 import android.os.Build;
 import android.os.IBinder;
 import android.util.Log;
 
+import androidx.annotation.NonNull;
 import androidx.annotation.RequiresApi;
 import androidx.core.app.NotificationCompat;
 import androidx.core.content.ContextCompat;
@@ -23,15 +25,18 @@ import com.google.android.gms.location.LocationCallback;
 import com.google.android.gms.location.LocationRequest;
 import com.google.android.gms.location.LocationResult;
 import com.google.android.gms.location.LocationServices;
+import com.google.firebase.database.DataSnapshot;
+import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
+import com.google.firebase.database.ValueEventListener;
 
 // TODO: explore how to persist service is app is killed
 public class TrackerService extends Service {
 
     private static final String TAG = TrackerService.class.getSimpleName();
     private String user;
-    private DatabaseReference ref;
+    private DatabaseReference ref1, ref2;
 
     public TrackerService(Context applicationContext) {
         super();
@@ -54,9 +59,8 @@ public class TrackerService extends Service {
             startForeground(1, new Notification());
 
         user = getSharedPreferences("login", MODE_PRIVATE).getString("user", "");
-        ref = FirebaseDatabase.getInstance().getReference().child("locations").child(user);
-
-        requestLocationUpdates();
+        ref1 = FirebaseDatabase.getInstance().getReference().child("locations").child(user);
+        ref2 = FirebaseDatabase.getInstance().getReference().child("users").child(user);
     }
 
     @RequiresApi(Build.VERSION_CODES.O)
@@ -83,7 +87,10 @@ public class TrackerService extends Service {
     public int onStartCommand(Intent intent, int flags, int startId) {
         super.onStartCommand(intent, flags, startId);
         Log.i("Service", "In onstart!" + user);
-        requestLocationUpdates();
+
+        locationUpdates();
+        attachListeners();
+
         return START_STICKY;
     }
 
@@ -99,7 +106,7 @@ public class TrackerService extends Service {
     @Override
     public IBinder onBind(Intent intent) {return null; }
     
-    private void requestLocationUpdates() {
+    private void locationUpdates() {
         LocationRequest request = new LocationRequest();
         request.setInterval(10000);
         request.setFastestInterval(5000);
@@ -116,11 +123,100 @@ public class TrackerService extends Service {
                     Location location = locationResult.getLastLocation();
                     if (location != null) {
                         Log.d(TAG, "location update " + location);
-                        ref.child("latitude").setValue(location.getLatitude());
-                        ref.child("longitude").setValue(location.getLongitude());
+                        ref1.child("latitude").setValue(location.getLatitude());
+                        ref1.child("longitude").setValue(location.getLongitude());
                     }
                 }
             }, null);
+        }
+    }
+
+    private void attachListeners() {
+
+        // listener for refresh ringer request
+        ref2.orderByKey().equalTo("refresh_ringer")
+            .addValueEventListener(new ValueEventListener() {
+                @Override
+                public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
+                    if(dataSnapshot.exists()) {
+                        Log.d("Ringer", "Refresh request by "
+                                + dataSnapshot.child("refresh_ringer").getValue());
+                        requestRingerUpdates();
+                        // also remove the request
+                        dataSnapshot.child("refresh_ringer").getRef().removeValue();
+                    }
+                }
+
+                @Override
+                public void onCancelled(@NonNull DatabaseError databaseError) {
+
+                }
+            });
+
+        // listener for refresh ringer request
+        ref2.orderByKey().equalTo("update_ringer")
+            .addValueEventListener(new ValueEventListener() {
+                @Override
+                public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
+                    if(dataSnapshot.exists()) {
+                        Log.d("Ringer", "Update request by "
+                                + dataSnapshot.child("update_ringer").getValue());
+
+                        // change the volume to max
+                        AudioManager audioManager = ((AudioManager)getSystemService(Context.AUDIO_SERVICE));
+
+                        // check for the ringer mode to be silent to check for DND permissions
+                        if(audioManager.getRingerMode()==AudioManager.RINGER_MODE_SILENT)
+                            checkAndRequestDNDAccess(audioManager);
+                        else {
+                            audioManager.setRingerMode(AudioManager.RINGER_MODE_NORMAL);
+                            audioManager.setStreamVolume(AudioManager.STREAM_RING,
+                                    audioManager.getStreamMaxVolume(AudioManager.STREAM_RING),0);
+                        }
+
+                        // also remove the request
+                        dataSnapshot.child("update_ringer").getRef().removeValue();
+                        // referesh ringer
+                        requestRingerUpdates();
+                    }
+                }
+
+                @Override
+                public void onCancelled(@NonNull DatabaseError databaseError) {
+
+                }
+            });
+    }
+
+    private void requestRingerUpdates() {
+
+        AudioManager mobilemode = (AudioManager)getSystemService(Context.AUDIO_SERVICE);
+
+        switch (mobilemode.getRingerMode()) {
+            case AudioManager.RINGER_MODE_SILENT:
+                ref1.child("ringer").setValue("Silent mode");
+                break;
+            case AudioManager.RINGER_MODE_VIBRATE:
+                ref1.child("ringer").setValue("Vibrate mode");
+                break;
+            case AudioManager.RINGER_MODE_NORMAL:
+                ref1.child("ringer").setValue("Normal mode: " + mobilemode.getStreamVolume(AudioManager.STREAM_RING));
+                break;
+        }
+//        Toast.makeText(this,"user","1000")
+    }
+
+    private void checkAndRequestDNDAccess(AudioManager audioManager) {
+
+        // check for permissions first
+        NotificationManager n = (NotificationManager) getApplicationContext().getSystemService(Context.NOTIFICATION_SERVICE);
+        if(n.isNotificationPolicyAccessGranted()) {
+            audioManager.setRingerMode(AudioManager.RINGER_MODE_NORMAL);
+            audioManager.setStreamVolume(AudioManager.STREAM_RING,
+                    audioManager.getStreamMaxVolume(AudioManager.STREAM_RING),0);
+        } else{
+            // do nothing
+            ref1.child("ringer").setValue("Silent mode: edit permissions denied");
         }
     }
 }

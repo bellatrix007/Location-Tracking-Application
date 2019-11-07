@@ -8,11 +8,9 @@ import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
-import android.graphics.Color;
 import android.location.Location;
 import android.location.LocationManager;
 import android.media.AudioManager;
-import android.os.Build;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.View;
@@ -35,7 +33,6 @@ import androidx.core.content.ContextCompat;
 import androidx.core.view.GravityCompat;
 import androidx.drawerlayout.widget.DrawerLayout;
 
-import com.amulyakhare.textdrawable.TextDrawable;
 import com.bellatrix.aditi.tracker.DatabaseClasses.UserMenuModel;
 import com.bellatrix.aditi.tracker.Utils.FetchURL;
 import com.bellatrix.aditi.tracker.Utils.TaskLoadedCallback;
@@ -200,60 +197,6 @@ public class MainActivity extends AppCompatActivity
 //        TextDrawable drawable = TextDrawable.builder()
 //                .buildRect("A", Color.RED);
 //        image.setImageDrawable(drawable);
-
-        // listener for refresh ringer request
-        databaseReference.child("users").child(user).orderByKey().equalTo("refresh_ringer")
-                .addValueEventListener(new ValueEventListener() {
-            @Override
-            public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
-                if(dataSnapshot.exists()) {
-                    Log.d("Ringer", "Refresh request by "
-                            + dataSnapshot.child("refresh_ringer").getValue());
-                    requestRingerUpdates();
-                    // also remove the request
-                    dataSnapshot.child("refresh_ringer").getRef().removeValue();
-                }
-            }
-
-            @Override
-            public void onCancelled(@NonNull DatabaseError databaseError) {
-
-            }
-        });
-
-        // listener for refresh ringer request
-        databaseReference.child("users").child(user).orderByKey().equalTo("update_ringer")
-                .addValueEventListener(new ValueEventListener() {
-            @Override
-            public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
-                if(dataSnapshot.exists()) {
-                    Log.d("Ringer", "Update request by "
-                            + dataSnapshot.child("update_ringer").getValue());
-
-                    // change the volume to max
-                    AudioManager audioManager = ((AudioManager)getSystemService(Context.AUDIO_SERVICE));
-                    
-                    // check for the ringer mode to be silent to check for DND permissions
-                    if(audioManager.getRingerMode()==AudioManager.RINGER_MODE_SILENT)
-                        checkAndRequestDNDAccess(audioManager);
-                    else {
-                        audioManager.setRingerMode(AudioManager.RINGER_MODE_NORMAL);
-                        audioManager.setStreamVolume(AudioManager.STREAM_RING,
-                                audioManager.getStreamMaxVolume(AudioManager.STREAM_RING),0);
-                    }
-
-                    // also remove the request
-                    dataSnapshot.child("update_ringer").getRef().removeValue();
-                    // referesh ringer
-                    requestRingerUpdates();
-                }
-            }
-
-            @Override
-            public void onCancelled(@NonNull DatabaseError databaseError) {
-
-            }
-        });
     }
 
     private void askPermission() {
@@ -287,6 +230,7 @@ public class MainActivity extends AppCompatActivity
 
     }
 
+    // TODO: ask for this permission beforehand
     private void checkAndRequestDNDAccess(AudioManager audioManager) {
         // check for permissions first
         NotificationManager n = (NotificationManager) getApplicationContext().getSystemService(Context.NOTIFICATION_SERVICE);
@@ -458,8 +402,8 @@ public class MainActivity extends AppCompatActivity
             public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
 
                 String user_key = dataSnapshot.getKey();
-                if(prevKey.equals(user_key))
-                    oldUser = true;
+                if(!prevKey.equals(user_key))
+                    oldUser = false;
 
                 // check if it is a ringer update
                 if(dataSnapshot.child("ringer").getValue()!=null) {
@@ -552,6 +496,19 @@ public class MainActivity extends AppCompatActivity
         // update the user's location
         mMap.setMyLocationEnabled(true);
         mMap.getUiSettings().setMyLocationButtonEnabled(true);
+
+        mMap.setOnMarkerClickListener(new GoogleMap.OnMarkerClickListener() {
+            @Override
+            public boolean onMarkerClick(Marker marker) {
+
+//                Toast.makeText(MainActivity.this, marker.getTitle(), Toast.LENGTH_SHORT).show();
+                // zoom in
+                mMap.animateCamera(CameraUpdateFactory.newLatLngZoom(marker.getPosition(), 20));
+                marker.showInfoWindow();
+
+                return true;
+            }
+        });
     }
 
     public void onRequestPermissionsResult(int requestCode,
@@ -688,36 +645,19 @@ public class MainActivity extends AppCompatActivity
         } else {
             // set bounds if a new user
             if(!oldUser) {
+
+                oldUser = true;
                 Log.d("animate", "true" + prevKey);
                 LatLngBounds.Builder builder = new LatLngBounds.Builder();
                 builder.include(currLocation);
                 builder.include(prevLocation);
                 mMap.animateCamera(CameraUpdateFactory.newLatLngBounds(builder.build(), 20));
-            } else {
-                Log.d("animate", "false" + prevKey);
-                mMap.animateCamera(CameraUpdateFactory.newLatLng(prevLocation));
             }
+            // else do nothing
         }
     }
 
-    private void requestRingerUpdates() {
 
-        AudioManager mobilemode = (AudioManager)getSystemService(Context.AUDIO_SERVICE);
-
-        switch (mobilemode.getRingerMode()) {
-            case AudioManager.RINGER_MODE_SILENT:
-                databaseReference.child("locations").child(user).child("ringer").setValue("Silent mode");
-                break;
-            case AudioManager.RINGER_MODE_VIBRATE:
-                databaseReference.child("locations").child(user).child("ringer").setValue("Vibrate mode");
-                break;
-            case AudioManager.RINGER_MODE_NORMAL:
-                databaseReference.child("locations").child(user).child("ringer")
-                        .setValue("Normal mode: " + mobilemode.getStreamVolume(AudioManager.STREAM_RING));
-                break;
-        }
-//        Toast.makeText(this,"user","1000")
-    }
 
     @Override
     protected void onActivityResult(int requestCode, int resultCode, @Nullable Intent data) {
