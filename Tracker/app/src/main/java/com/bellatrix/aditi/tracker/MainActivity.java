@@ -175,6 +175,9 @@ public class MainActivity extends AppCompatActivity
         fab.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
+                SmsManager smsManager = SmsManager.getDefault();
+                smsManager.sendTextMessage(user,null,"Please send your location. Sent by Tracker!",
+                        null, null);
                     Snackbar.make(view, user, Snackbar.LENGTH_LONG)
                             .setAction("Action", null).show();
 

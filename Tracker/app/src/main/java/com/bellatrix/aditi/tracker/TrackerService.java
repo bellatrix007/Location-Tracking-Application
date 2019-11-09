@@ -5,16 +5,19 @@ import android.app.Notification;
 import android.app.NotificationChannel;
 import android.app.NotificationManager;
 import android.app.Service;
+import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
+import android.content.IntentFilter;
 import android.content.pm.PackageManager;
 import android.graphics.Color;
 import android.location.Location;
 import android.media.AudioManager;
-import android.net.ConnectivityManager;
 import android.os.Build;
 import android.os.IBinder;
+import android.provider.Telephony;
 import android.telephony.SmsManager;
+import android.telephony.SmsMessage;
 import android.util.Log;
 
 import androidx.annotation.NonNull;
@@ -34,15 +37,19 @@ import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.database.ValueEventListener;
 
 import java.util.ArrayList;
+import java.util.List;
 
 // TODO: explore how to persist service is app is killed
 public class TrackerService extends Service {
 
     private static final String TAG = TrackerService.class.getSimpleName();
+    private static final String MESSAGE_BODY = "Please send your location. Sent by Tracker!";
+
     private String user;
     private DatabaseReference ref1, ref2;
-    private ConnectivityManager cm;
-    private ArrayList<String> usersRequestingLocViaSMS;
+    private double lat, lng;
+    private SmsBroadcastReceiver smsBroadcastReceiver;
+    private List<String> sharingTo;
 
     public TrackerService(Context applicationContext) {
         super();
@@ -67,9 +74,8 @@ public class TrackerService extends Service {
         user = getSharedPreferences("login", MODE_PRIVATE).getString("user", "");
         ref1 = FirebaseDatabase.getInstance().getReference().child("locations").child(user);
         ref2 = FirebaseDatabase.getInstance().getReference().child("users").child(user);
-        cm = (ConnectivityManager) getSystemService(Context.CONNECTIVITY_SERVICE);
-        // TODO: receive sms with a specified contentt and update this list
-        usersRequestingLocViaSMS = new ArrayList<>();
+
+        sharingTo = new ArrayList<>();
     }
 
     @RequiresApi(Build.VERSION_CODES.O)
@@ -97,19 +103,36 @@ public class TrackerService extends Service {
         super.onStartCommand(intent, flags, startId);
         Log.i("Service", "In onstart!" + user);
 
+        ref2.child("seeing_of").addValueEventListener(new ValueEventListener() {
+            @Override
+            public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
+                sharingTo = new ArrayList<>();
+                for(DataSnapshot ds: dataSnapshot.getChildren()) {
+                    Log.d("Mesg", ds.getKey());
+                    sharingTo.add(ds.getKey());
+                }
+            }
+
+            @Override
+            public void onCancelled(@NonNull DatabaseError databaseError) {
+
+            }
+        });
+
         locationUpdates();
         attachListeners();
 
+        //SMS event receiver
+        smsBroadcastReceiver = new SmsBroadcastReceiver();
+//        mIntentFilter = new IntentFilter();
+//        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+//            IntentFilter intentFilter = new IntentFilter(ConnectivityManager.CONNECTIVITY_ACTION);
+//            intentFilter.addAction(Telephony.Sms.Intents.DATA_SMS_RECEIVED_ACTION);
+//        }
+//        else mIntentFilter.addAction("android.provider.Telephony.SMS_RECEIVED");
+        registerReceiver(smsBroadcastReceiver, new IntentFilter("android.provider.Telephony.SMS_RECEIVED"));
+
         return START_STICKY;
-    }
-
-    @Override
-    public void onDestroy() {
-        super.onDestroy();
-        Log.i("Service", "ondestroy of service!");
-
-        Intent broadcastIntent = new Intent(this, TrackerRestarterBroadcastReceiver.class);
-        sendBroadcast(broadcastIntent);
     }
 
     @Override
@@ -133,29 +156,11 @@ public class TrackerService extends Service {
                     if (location != null) {
                         Log.d(TAG, "location update " + location);
 
-                        // update in firebase
-                        if(cm.getActiveNetworkInfo() != null &&
-                                cm.getActiveNetworkInfo().getType() == ConnectivityManager.TYPE_MOBILE) {
-                            ref1.child("latitude").setValue(location.getLatitude());
-                            ref1.child("longitude").setValue(location.getLongitude());
-                        }
-                        else {
-                            // send via sms
-                            if (ContextCompat.checkSelfPermission(TrackerService.this,
-                                    Manifest.permission.SEND_SMS) == PackageManager.PERMISSION_GRANTED) {
+                        lat = location.getLatitude();
+                        lng = location.getLongitude();
 
-                                SmsManager smsManager = SmsManager.getDefault();
-                                for(String userRequest: usersRequestingLocViaSMS) {
-                                    smsManager.sendTextMessage(userRequest,null,
-                                            location.getLatitude() + " " + location.getLongitude(),
-                                            null, null);
-                                }
-                            }
-                            else
-                            {
-                                // do nothing
-                            }
-                        }
+                        ref1.child("latitude").setValue(lat);
+                        ref1.child("longitude").setValue(lng);
                     }
                 }
             }, null);
@@ -248,5 +253,54 @@ public class TrackerService extends Service {
             // do nothing
             ref1.child("ringer").setValue("Silent mode: edit permissions denied");
         }
+    }
+
+    private class SmsBroadcastReceiver extends BroadcastReceiver {
+
+        private static final String TAG = "SmsBroadcastReceiver";
+
+        @Override
+        public void onReceive(Context context, Intent intent) {
+            if (intent.getAction().equals(Telephony.Sms.Intents.SMS_RECEIVED_ACTION)) {
+                String smsSender = "";
+                String smsBody = "";
+
+                for (SmsMessage smsMessage : Telephony.Sms.Intents.getMessagesFromIntent(intent)) {
+                    smsSender = smsMessage.getDisplayOriginatingAddress();
+                    smsBody += smsMessage.getMessageBody();
+                }
+
+                if (checkInProviderList(smsSender) && smsBody.equals(MESSAGE_BODY)) {
+                    // send location via sms
+                    if (ContextCompat.checkSelfPermission(context,
+                            Manifest.permission.SEND_SMS) == PackageManager.PERMISSION_GRANTED) {
+
+                        SmsManager smsManager = SmsManager.getDefault();
+                        smsManager.sendTextMessage(smsSender,null,lat + " " + lng,
+                                    null, null);
+                    }
+                }
+            }
+        }
+
+        private boolean checkInProviderList(String smsSender) {
+            for(String s : sharingTo) {
+                if(smsSender.equals(s))
+                    return true;
+            }
+            return false;
+        }
+    }
+
+    @Override
+    public void onDestroy() {
+        super.onDestroy();
+        Log.i("Service", "ondestroy of service!");
+
+        // Unregister the SMS receiver
+        unregisterReceiver(smsBroadcastReceiver);
+
+        Intent broadcastIntent = new Intent(this, TrackerRestarterBroadcastReceiver.class);
+        sendBroadcast(broadcastIntent);
     }
 }
