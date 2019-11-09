@@ -108,7 +108,6 @@ public class TrackerService extends Service {
             public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
                 sharingTo = new ArrayList<>();
                 for(DataSnapshot ds: dataSnapshot.getChildren()) {
-                    Log.d("Mesg", ds.getKey());
                     sharingTo.add(ds.getKey());
                 }
             }
@@ -257,8 +256,6 @@ public class TrackerService extends Service {
 
     private class SmsBroadcastReceiver extends BroadcastReceiver {
 
-        private static final String TAG = "SmsBroadcastReceiver";
-
         @Override
         public void onReceive(Context context, Intent intent) {
             if (intent.getAction().equals(Telephony.Sms.Intents.SMS_RECEIVED_ACTION)) {
@@ -275,8 +272,9 @@ public class TrackerService extends Service {
                     if (ContextCompat.checkSelfPermission(context,
                             Manifest.permission.SEND_SMS) == PackageManager.PERMISSION_GRANTED) {
 
+                        String locationMessage = lat + " " + lng + "\nSent by Tracker!";
                         SmsManager smsManager = SmsManager.getDefault();
-                        smsManager.sendTextMessage(smsSender,null,lat + " " + lng,
+                        smsManager.sendTextMessage(smsSender,null,locationMessage,
                                     null, null);
                     }
                 }

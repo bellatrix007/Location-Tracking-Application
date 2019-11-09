@@ -3,16 +3,20 @@ package com.bellatrix.aditi.tracker;
 import android.Manifest;
 import android.app.ActivityManager;
 import android.app.NotificationManager;
+import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
+import android.content.IntentFilter;
 import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
 import android.location.Location;
 import android.location.LocationManager;
 import android.media.AudioManager;
 import android.os.Bundle;
+import android.provider.Telephony;
 import android.telephony.SmsManager;
+import android.telephony.SmsMessage;
 import android.util.Log;
 import android.view.View;
 import android.view.Menu;
@@ -86,7 +90,7 @@ public class MainActivity extends AppCompatActivity
 
     private GoogleMap mMap;
     private Marker mMarker;
-    private String mDirectionMode, prevKey, prevRinger;
+    private String mDirectionMode, prevKey, prevKeyName, prevRinger;
     private boolean oldUser;
     private LatLng prevLocation;
     private ValueEventListener markerListener;
@@ -95,6 +99,8 @@ public class MainActivity extends AppCompatActivity
     private LatLng currLocation;
 
     private ImageButton refreshRinger, updateRinger;
+
+    private LocationSMSReceiver smsReceiver;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -106,6 +112,7 @@ public class MainActivity extends AppCompatActivity
         user =  getSharedPreferences("login", MODE_PRIVATE).getString("user", "");
         mDirectionMode = "driving";
         prevKey = "";
+        prevKeyName = "";
         prevRinger = "";
         oldUser = false;
 
@@ -176,10 +183,14 @@ public class MainActivity extends AppCompatActivity
             @Override
             public void onClick(View view) {
                 SmsManager smsManager = SmsManager.getDefault();
-                smsManager.sendTextMessage(user,null,"Please send your location. Sent by Tracker!",
+                smsManager.sendTextMessage(prevKey,null,"Please send your location. Sent by Tracker!",
                         null, null);
-                    Snackbar.make(view, user, Snackbar.LENGTH_LONG)
-                            .setAction("Action", null).show();
+                Snackbar.make(view, "Message sent to " + prevKey, Snackbar.LENGTH_LONG)
+                        .setAction("Action", null).show();
+
+                smsReceiver = new LocationSMSReceiver();
+                registerReceiver(smsReceiver, new IntentFilter("android.provider.Telephony.SMS_RECEIVED"));
+
 
             }
         });
@@ -382,6 +393,14 @@ public class MainActivity extends AppCompatActivity
                 if (childList.get(headerList.get(groupPosition)) != null) {
                     UserMenuModel model = childList.get(headerList.get(groupPosition)).get(childPosition);
                     if (model.menuName.length() > 0) {
+
+                        // unregister the previous receiver, if any
+                        try {
+                            unregisterReceiver(smsReceiver);
+                        } catch (Exception e) {
+                            Log.d("MainActivity", "Receiver cannot be unregistered");
+                        }
+
                         setUpdates(model.menuName, model.displayName);
                         Log.d("marker",model.displayName);
                         onBackPressed();
@@ -393,7 +412,7 @@ public class MainActivity extends AppCompatActivity
         });
     }
 
-    private void setUpdates(String key,final String marker_title) {
+    private void setUpdates(String key, final String marker_title) {
         if(markerListener != null && !prevKey.equals("")) {
             databaseReference.child("locations").child(prevKey).removeEventListener(markerListener);
         } else {
@@ -435,6 +454,7 @@ public class MainActivity extends AppCompatActivity
                 }
 
                 prevKey = user_key;
+                prevKeyName = marker_title;
             }
 
             @Override
@@ -586,36 +606,6 @@ public class MainActivity extends AppCompatActivity
 
     private void getCurrentLocation() {
 
-        // Location manager to get location
-//        LocationManager locationManager = (LocationManager) this.getSystemService(Context.LOCATION_SERVICE);
-//
-//        try {
-//            // Register the listener with the Location Manager to receive location updates
-//            locationManager.requestLocationUpdates(LocationManager.GPS_PROVIDER, 10000, 0.00001f, new LocationListener() {
-//                @Override
-//                public void onLocationChanged(Location location) {
-//
-//                }
-//
-//                @Override
-//                public void onStatusChanged(String s, int i, Bundle bundle) {
-//
-//                }
-//
-//                @Override
-//                public void onProviderEnabled(String s) {
-//
-//                }
-//
-//                @Override
-//                public void onProviderDisabled(String s) {
-//
-//                }
-//            });
-//        } catch (SecurityException e) {
-//            Log.d("Location manager","Locations permission denied: " + e.getMessage());
-//        }
-
         LocationRequest request = new LocationRequest();
         request.setInterval(30000);
         request.setFastestInterval(10000);
@@ -684,6 +674,16 @@ public class MainActivity extends AppCompatActivity
 
     }
 
+    @Override
+    protected void onStop() {
+        super.onStop();
+        try {
+            unregisterReceiver(smsReceiver);
+        } catch (Exception e) {
+            Log.d("MainActivity", "Receiver cannot be unregistered");
+        }
+    }
+
     // if we do not stop it, the service will die with our app.
     // Instead, by stopping the service,
     // we will force the service to call its own onDestroy which will force it to recreate itself
@@ -693,5 +693,40 @@ public class MainActivity extends AppCompatActivity
         stopService(trackerServiceIntent);
         Log.d("Service", "ondestroy of activity!");
         super.onDestroy();
+    }
+
+    private class LocationSMSReceiver extends BroadcastReceiver {
+
+        @Override
+        public void onReceive(Context context, Intent intent) {
+            if (intent.getAction().equals(Telephony.Sms.Intents.SMS_RECEIVED_ACTION)) {
+                String smsSender = "";
+                String smsBody = "";
+
+                for (SmsMessage smsMessage : Telephony.Sms.Intents.getMessagesFromIntent(intent)) {
+                    smsSender = smsMessage.getDisplayOriginatingAddress();
+                    smsBody += smsMessage.getMessageBody();
+                }
+                smsBody = smsBody.trim();
+
+                if (smsSender.equals(user) && smsBody.endsWith("Sent by Tracker!")) {
+                    // read the coordinates
+                    try {
+                        double lat = Double.parseDouble(smsBody.substring(0, smsBody.indexOf(" ")));
+                        double lng = Double.parseDouble(smsBody.substring(smsBody.indexOf(" ") + 1,
+                                smsBody.indexOf("Sent by Tracker!")));
+
+                        // update location info
+                        prevLocation = new LatLng(lat, lng);
+                        setMarker(prevKey, prevKeyName);
+
+                        unregisterReceiver(smsReceiver);
+
+                    } catch (NumberFormatException e) {
+                        Log.d("LocationSMSReceiver", "Not the required sms");
+                    }
+                }
+            }
+        }
     }
 }
