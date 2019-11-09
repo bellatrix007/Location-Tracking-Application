@@ -11,8 +11,10 @@ import android.content.pm.PackageManager;
 import android.graphics.Color;
 import android.location.Location;
 import android.media.AudioManager;
+import android.net.ConnectivityManager;
 import android.os.Build;
 import android.os.IBinder;
+import android.telephony.SmsManager;
 import android.util.Log;
 
 import androidx.annotation.NonNull;
@@ -31,12 +33,16 @@ import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.database.ValueEventListener;
 
+import java.util.ArrayList;
+
 // TODO: explore how to persist service is app is killed
 public class TrackerService extends Service {
 
     private static final String TAG = TrackerService.class.getSimpleName();
     private String user;
     private DatabaseReference ref1, ref2;
+    private ConnectivityManager cm;
+    private ArrayList<String> usersRequestingLocViaSMS;
 
     public TrackerService(Context applicationContext) {
         super();
@@ -61,6 +67,9 @@ public class TrackerService extends Service {
         user = getSharedPreferences("login", MODE_PRIVATE).getString("user", "");
         ref1 = FirebaseDatabase.getInstance().getReference().child("locations").child(user);
         ref2 = FirebaseDatabase.getInstance().getReference().child("users").child(user);
+        cm = (ConnectivityManager) getSystemService(Context.CONNECTIVITY_SERVICE);
+        // TODO: receive sms with a specified contentt and update this list
+        usersRequestingLocViaSMS = new ArrayList<>();
     }
 
     @RequiresApi(Build.VERSION_CODES.O)
@@ -123,8 +132,30 @@ public class TrackerService extends Service {
                     Location location = locationResult.getLastLocation();
                     if (location != null) {
                         Log.d(TAG, "location update " + location);
-                        ref1.child("latitude").setValue(location.getLatitude());
-                        ref1.child("longitude").setValue(location.getLongitude());
+
+                        // update in firebase
+                        if(cm.getActiveNetworkInfo() != null &&
+                                cm.getActiveNetworkInfo().getType() == ConnectivityManager.TYPE_MOBILE) {
+                            ref1.child("latitude").setValue(location.getLatitude());
+                            ref1.child("longitude").setValue(location.getLongitude());
+                        }
+                        else {
+                            // send via sms
+                            if (ContextCompat.checkSelfPermission(TrackerService.this,
+                                    Manifest.permission.SEND_SMS) == PackageManager.PERMISSION_GRANTED) {
+
+                                SmsManager smsManager = SmsManager.getDefault();
+                                for(String userRequest: usersRequestingLocViaSMS) {
+                                    smsManager.sendTextMessage(userRequest,null,
+                                            location.getLatitude() + " " + location.getLongitude(),
+                                            null, null);
+                                }
+                            }
+                            else
+                            {
+                                // do nothing
+                            }
+                        }
                     }
                 }
             }, null);
@@ -153,7 +184,7 @@ public class TrackerService extends Service {
                 }
             });
 
-        // listener for refresh ringer request
+        // listener for update ringer request
         ref2.orderByKey().equalTo("update_ringer")
             .addValueEventListener(new ValueEventListener() {
                 @Override
@@ -203,7 +234,6 @@ public class TrackerService extends Service {
                 ref1.child("ringer").setValue("Normal mode: " + mobilemode.getStreamVolume(AudioManager.STREAM_RING));
                 break;
         }
-//        Toast.makeText(this,"user","1000")
     }
 
     private void checkAndRequestDNDAccess(AudioManager audioManager) {

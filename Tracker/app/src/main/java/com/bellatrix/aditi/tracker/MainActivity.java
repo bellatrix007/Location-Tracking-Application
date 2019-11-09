@@ -12,13 +12,13 @@ import android.location.Location;
 import android.location.LocationManager;
 import android.media.AudioManager;
 import android.os.Bundle;
+import android.telephony.SmsManager;
 import android.util.Log;
 import android.view.View;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.widget.ExpandableListView;
 import android.widget.ImageButton;
-import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -64,6 +64,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 
+// TODO: Manage all permissions
 public class MainActivity extends AppCompatActivity
         implements NavigationView.OnNavigationItemSelectedListener, OnMapReadyCallback,
         DialogInterface.OnDismissListener, TaskLoadedCallback {
@@ -174,8 +175,9 @@ public class MainActivity extends AppCompatActivity
         fab.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                Snackbar.make(view, user, Snackbar.LENGTH_LONG)
-                        .setAction("Action", null).show();
+                    Snackbar.make(view, user, Snackbar.LENGTH_LONG)
+                            .setAction("Action", null).show();
+
             }
         });
 
@@ -536,6 +538,10 @@ public class MainActivity extends AppCompatActivity
                 }
                 return;
             }
+            case 122:
+                SmsManager smsManager = SmsManager.getDefault();
+                smsManager.sendTextMessage(user, null, "Hello!!", null, null);
+                break;
         }
     }
 
