@@ -1,6 +1,5 @@
 <resources>
     <string name="app_name">TrackerB</string>
-    <string name="title_activity_admin">AdminActivity</string>
     <string name="navigation_drawer_open">Open navigation drawer</string>
     <string name="navigation_drawer_close">Close navigation drawer</string>
     <string name="nav_header_title">Android Studio</string>
@@ -14,4 +13,7 @@
     <string name="menu_tools">Tools</string>
     <string name="menu_share">Share</string>
     <string name="menu_send">Send</string>
+    <string name="title_activity_admin">AdminActivity</string>
+    <string name="title_activity_delivery">DeliveryActivity</string>
+    <string name="title_activity_customer">CustomerActivity</string>
 </resources>

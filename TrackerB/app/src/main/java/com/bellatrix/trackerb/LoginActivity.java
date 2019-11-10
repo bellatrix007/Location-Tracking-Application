@@ -7,6 +7,7 @@ import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.os.CountDownTimer;
 import android.view.View;
+import android.widget.RadioGroup;
 import android.widget.Toast;
 
 import com.bellatrix.trackerb.Utils.CommonFunctions;
@@ -27,6 +28,7 @@ public class LoginActivity extends AppCompatActivity {
 
     private TextInputEditText phoneet,otpet;
     private MaterialButton otpb, loginb;
+    private RadioGroup userRole;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -35,14 +37,15 @@ public class LoginActivity extends AppCompatActivity {
 
         sp = getSharedPreferences("login", MODE_PRIVATE);
 
-        if(sp.getBoolean("logged", false)) {
-            goToHome();
+        if(sp.getInt("logged", 0)!=0) {
+            goToHome(sp.getInt("logged", 0));
         }
 
         phoneet = (TextInputEditText) findViewById(R.id.textPhone);
         otpet = (TextInputEditText) findViewById(R.id.textOTP);
         otpb = (MaterialButton) findViewById(R.id.buttonOTP);
         loginb = (MaterialButton) findViewById(R.id.buttonLogin);
+        userRole = (RadioGroup) findViewById(R.id.radioGroup);
 
         controller = new RingcaptchaAPIController(APP_KEY);
 
@@ -128,7 +131,7 @@ public class LoginActivity extends AppCompatActivity {
 
                 RingcaptchaAPIController.setSMSHandler(null);
                 if(ringcaptchaResponse.status.equals("SUCCESS")) {
-                    goToHome();
+                    goToHome(0);
                 }
             }
 
@@ -140,13 +143,51 @@ public class LoginActivity extends AppCompatActivity {
         }, API_KEY);
     }
 
-    private void goToHome() {
-        Intent intent = new Intent(this, MainActivity.class);
-        startActivity(intent);
+    private void goToHome(int rolex) {
+        Intent intent;
+
         SharedPreferences.Editor spEdit = sp.edit();
         if(sp.getString("user","").equals(""))
             spEdit.putString("user", phone);
-        spEdit.putBoolean("logged", true);
+
+        if(userRole == null)
+        {
+            switch (rolex) {
+                case 1:
+                    intent = new Intent(this, AdminActivity.class);
+                    break;
+                case 2:
+                    intent = new Intent(this, DeliveryActivity.class);
+                    break;
+                case 3:
+                    intent = new Intent(this, CustomerActivity.class);
+                    break;
+                default:
+                    intent = new Intent(this, AdminActivity.class);
+            }
+        }
+        else {
+            int role = userRole.getCheckedRadioButtonId();
+            switch (role) {
+                case R.id.adminR:
+                    intent = new Intent(this, AdminActivity.class);
+                    spEdit.putInt("logged", 1);
+                    break;
+                case R.id.deliveryR:
+                    intent = new Intent(this, DeliveryActivity.class);
+                    spEdit.putInt("logged", 2);
+                    break;
+                case R.id.customerR:
+                    intent = new Intent(this, CustomerActivity.class);
+                    spEdit.putInt("logged", 3);
+                    break;
+                default:
+                    intent = new Intent(this, AdminActivity.class);
+                    spEdit.putInt("logged", 1);
+            }
+        }
+
+        startActivity(intent);
         spEdit.apply();
         finish();
     }
