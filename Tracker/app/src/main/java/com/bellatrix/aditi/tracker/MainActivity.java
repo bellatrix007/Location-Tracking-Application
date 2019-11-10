@@ -68,6 +68,8 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 
+import static com.bellatrix.aditi.tracker.Utils.CommonFunctions.getUrl;
+
 // TODO: Manage all permissions
 public class MainActivity extends AppCompatActivity
         implements NavigationView.OnNavigationItemSelectedListener, OnMapReadyCallback,
@@ -485,23 +487,7 @@ public class MainActivity extends AppCompatActivity
         mMarker.showInfoWindow();
         updateCameraBounds();
         new FetchURL(MainActivity.this)
-                .execute(getUrl(currLocation, prevLocation, mDirectionMode), mDirectionMode);
-    }
-
-    private String getUrl(LatLng origin, LatLng dest, String directionMode) {
-        // Origin of route
-        String str_origin = "origin=" + origin.latitude + "," + origin.longitude;
-        // Destination of route
-        String str_dest = "destination=" + dest.latitude + "," + dest.longitude;
-        // Mode
-        String mode = "mode=" + directionMode;
-        // Building the parameters to the web service
-        String parameters = str_origin + "&" + str_dest + "&" + mode;
-        // Output format
-        String output = "json";
-        // Building the url to the web service
-        String url = "https://maps.googleapis.com/maps/api/directions/" + output + "?" + parameters + "&key=" + getString(R.string.google_maps_key);
-        return url;
+                .execute(getUrl(currLocation, prevLocation, mDirectionMode, getString(R.string.google_maps_key)), mDirectionMode);
     }
 
     private void goToLogin() {
@@ -628,7 +614,8 @@ public class MainActivity extends AppCompatActivity
 
                         if(prevLocation!=null)
                             new FetchURL(MainActivity.this)
-                                    .execute(getUrl(currLocation, prevLocation, mDirectionMode), mDirectionMode);
+                                    .execute(getUrl(currLocation, prevLocation, mDirectionMode, getString(R.string.google_maps_key)),
+                                            mDirectionMode);
                     }
                 }
             }, null);

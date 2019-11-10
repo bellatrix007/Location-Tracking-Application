@@ -53,7 +53,6 @@ public class AddOrderActivity extends AppCompatActivity {
                 customer = "+91" + t2.getText().toString();
                 delivery = "+91" + t3.getText().toString();
 
-                Log.d("Aaaa", description + " " + customer+" " +delivery);
                 // check for valid entries
                 check();
             }
@@ -66,7 +65,6 @@ public class AddOrderActivity extends AppCompatActivity {
             @Override
             public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
 
-                Log.d("Aaaa", dataSnapshot+"");
                 if(!dataSnapshot.exists()) {
                     success = -1;
                 }
@@ -98,9 +96,12 @@ public class AddOrderActivity extends AppCompatActivity {
     private void addOrder(String customer, String description) {
         // add order in database
         String id = databaseReference.child("order").push().getKey();
-        Log.d("Aaaa", id);
         Order order = new Order(customer, delivery, description);
         databaseReference.child("order").child(id).setValue(order);
+
+        // add order to admin
+        String admin = getSharedPreferences("login", MODE_PRIVATE).getString("user", "");
+        databaseReference.child("admin").child(admin).child("order").child(id).setValue(description);
 
         // make delivery person as busy
         databaseReference.child("delivery").child(delivery).child("idle").setValue("false");
