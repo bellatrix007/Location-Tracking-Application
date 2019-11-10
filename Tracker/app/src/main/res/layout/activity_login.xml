@@ -49,9 +49,7 @@
             android:layout_height="wrap_content"
             android:ems="10"
             android:inputType="numberPassword"
-            android:hint="OTP" />
-            app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintStart_toStartOf="parent" />
+            android:hint="OTP"/>
     </com.google.android.material.textfield.TextInputLayout>
 
     <com.google.android.material.button.MaterialButton

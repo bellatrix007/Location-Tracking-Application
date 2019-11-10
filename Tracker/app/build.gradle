@@ -24,7 +24,6 @@ dependencies {
     implementation 'androidx.appcompat:appcompat:1.0.2'
     implementation 'androidx.constraintlayout:constraintlayout:1.1.3'
     implementation 'com.google.android.material:material:1.0.0'
-    implementation 'com.android.support.constraint:constraint-layout:1.1.3'
     implementation 'androidx.drawerlayout:drawerlayout:1.0.0'
     implementation 'com.ringcaptcha.android:ringcaptcha:1.2.0'
     implementation 'com.amulyakhare:com.amulyakhare.textdrawable:1.0.1'

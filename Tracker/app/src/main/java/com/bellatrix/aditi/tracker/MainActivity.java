@@ -375,6 +375,7 @@ public class MainActivity extends AppCompatActivity
                             startActivity(intent);
 
                         } else {    // log out
+                            stopService(trackerServiceIntent);
                             goToLogin();
                         }
                         onBackPressed();
