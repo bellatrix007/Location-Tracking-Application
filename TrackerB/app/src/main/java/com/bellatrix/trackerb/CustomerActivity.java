@@ -5,6 +5,8 @@ import android.os.Bundle;
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
 import com.google.android.material.snackbar.Snackbar;
 
+import android.view.MenuItem;
+import android.view.SubMenu;
 import android.view.View;
 
 import androidx.navigation.NavController;
@@ -37,6 +39,16 @@ public class CustomerActivity extends AppCompatActivity {
             public void onClick(View view) {
                 Snackbar.make(view, "Replace with your own action", Snackbar.LENGTH_LONG)
                         .setAction("Action", null).show();
+                NavigationView navigationView = findViewById(R.id.nav_view);
+                Menu m = navigationView.getMenu();
+//                m.removeItem(Menu.FIRST);
+//                MenuItem x = m.getItem(Menu.FIRST);
+                SubMenu topChannelMenu = m.addSubMenu("Top Channels");
+                topChannelMenu.add("Foo1");
+                topChannelMenu.add("Bar");
+                topChannelMenu.add("Baz");
+                topChannelMenu.clear();
+                topChannelMenu.add("Baz");
             }
         });
         DrawerLayout drawer = findViewById(R.id.drawer_layout);

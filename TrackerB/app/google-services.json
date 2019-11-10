@@ -1,0 +1,40 @@
+{
+  "project_info": {
+    "project_number": "603226373341",
+    "firebase_url": "https://b2b-tracker.firebaseio.com",
+    "project_id": "b2b-tracker",
+    "storage_bucket": "b2b-tracker.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:603226373341:android:bedc17ffd926a8898b2f34",
+        "android_client_info": {
+          "package_name": "com.bellatrix.trackerb"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "603226373341-mk6ou14s1ib1kmmemmdqi0ngufn72o5k.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCFz8e43uLXGomwytAuy8jUJG5aARrDsVI"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "603226373341-mk6ou14s1ib1kmmemmdqi0ngufn72o5k.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
