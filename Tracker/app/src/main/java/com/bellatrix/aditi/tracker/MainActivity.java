@@ -106,10 +106,6 @@ public class MainActivity extends AppCompatActivity
 
     private ImageButton refreshRinger, updateRinger;
 
-
-
-
-
     private LocationSMSReceiver smsReceiver;
 
     @Override

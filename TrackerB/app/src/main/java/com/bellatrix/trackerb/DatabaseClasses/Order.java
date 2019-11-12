@@ -2,7 +2,7 @@ package com.bellatrix.trackerb.DatabaseClasses;
 
 public class Order {
 
-    private String customer, delivery, description;
+    private String customer, delivery, description, delivered;
 
     public Order() {
 
@@ -12,6 +12,7 @@ public class Order {
         this.customer = customer;
         this.delivery = delivery;
         this.description = description;
+        this.delivered = "0";
     }
 
     public String getCustomer() {
@@ -24,5 +25,9 @@ public class Order {
 
     public String getDescription() {
         return this.description;
+    }
+
+    public String getDelivered() {
+        return this.delivered;
     }
 }
