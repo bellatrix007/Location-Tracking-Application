@@ -248,6 +248,40 @@ public class MainActivity extends AppCompatActivity
             }
         });
 
+        final LinearLayout time = (LinearLayout) findViewById(R.id.timeLayout);
+        final TextView timeHead = (TextView) findViewById(R.id.timeHead);
+        final TextView timeText = (TextView) findViewById(R.id.timeText);
+        ViewGroup.LayoutParams timelayoutParams = time.getLayoutParams();
+        timelayoutParams.height = 150;
+        timelayoutParams.width = 150;
+        time.setLayoutParams(timelayoutParams);
+        time.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                if(time_expanded)
+                {
+                    ViewGroup.LayoutParams layoutParams = time.getLayoutParams();
+                    layoutParams.width = 150;
+                    time.setLayoutParams(layoutParams);
+                    time_expanded = false;
+                    timeHead.setVisibility(View.VISIBLE);
+                    timeText.setVisibility(View.GONE);
+                }
+                else
+                {
+                    ViewGroup.LayoutParams layoutParams = time.getLayoutParams();
+                    layoutParams.width = 300;
+                    time.setLayoutParams(layoutParams);
+                    time_expanded = true;
+                    time.setBackground(ContextCompat.getDrawable(MainActivity.this, R.drawable.expanded_button));
+                    timeHead.setVisibility(View.GONE);
+                    timeText.setVisibility(View.VISIBLE);
+                }
+            }
+        });
+
+
+
 
         View headerLayout = navigationView.getHeaderView(0);
 //        ImageView image = (ImageView) headerLayout.findViewById(R.id.avatar);
@@ -459,6 +493,9 @@ public class MainActivity extends AppCompatActivity
             databaseReference.child("locations").child(prevKey).removeEventListener(markerListener);
         } else {
             ((LinearLayout)findViewById(R.id.bottomLayout)).setVisibility(View.VISIBLE);
+            ((LinearLayout)findViewById(R.id.timeLayout)).setVisibility(View.VISIBLE);
+            ((LinearLayout)findViewById(R.id.distanceLayout)).setVisibility(View.VISIBLE);
+
             if(mMap!=null)
                 mMap.setPadding(0,0,0,104);
         }
