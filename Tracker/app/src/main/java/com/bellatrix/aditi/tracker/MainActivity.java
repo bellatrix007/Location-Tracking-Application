@@ -2,12 +2,12 @@ package com.bellatrix.aditi.tracker;
 
 import android.Manifest;
 import android.app.ActivityManager;
+import android.app.Dialog;
 import android.app.NotificationManager;
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
-import android.content.IntentFilter;
 import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
 import android.location.Location;
@@ -33,11 +33,11 @@ import androidx.annotation.DrawableRes;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.ActionBarDrawerToggle;
+import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.widget.Toolbar;
 import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
-import androidx.core.content.res.ResourcesCompat;
 import androidx.core.view.GravityCompat;
 import androidx.drawerlayout.widget.DrawerLayout;
 
@@ -87,7 +87,9 @@ public class MainActivity extends AppCompatActivity
 //            Manifest.permission.RECEIVE_SMS
 //    };
     private static final int PERMISSION_LOCATION = 1234;
-    private static final int ON_DO_NOT_DISTURB_CALLBACK_CODE = 1235;
+    private static final int PERMISSION_SEND_SMS = 1235;
+    private static final int PERMISSION_SEND_SMS_ACT = 1236;
+    private static final int ON_DO_NOT_DISTURB_CALLBACK_CODE = 1237;
 
     ExpandableUserListAdapter expandableListAdapter;
     ExpandableListView expandableListView;
@@ -103,12 +105,11 @@ public class MainActivity extends AppCompatActivity
     private Marker mMarker;
     private String mDirectionMode, prevKey, prevKeyName, prevRinger;
     private boolean oldUser;
-    private LatLng prevLocation;
+    private LatLng currLocation, prevLocation;
     private ValueEventListener markerListener;
     private Polyline mPolyline;
     private Boolean distance_expanded;
     private Boolean time_expanded;
-    private LatLng currLocation;
 
     private ImageButton refreshRinger, updateRinger;
 
@@ -131,6 +132,10 @@ public class MainActivity extends AppCompatActivity
         firebaseDatabase = FirebaseDatabase.getInstance();
         databaseReference = firebaseDatabase.getReference();
 
+        NavigationView navigationView = (NavigationView) findViewById(R.id.nav_view);
+        final View headerLayout = navigationView.getHeaderView(0);
+        navigationView.setNavigationItemSelectedListener(this);
+
         // check for new user
         databaseReference.child("users").child(user).addValueEventListener(new ValueEventListener() {
             @Override
@@ -146,9 +151,10 @@ public class MainActivity extends AppCompatActivity
                     user_name = dataSnapshot.child("name").getValue().toString();
                     getSharedPreferences("login", MODE_PRIVATE).edit()
                             .putString("user_name", user_name).apply();
-                    ((TextView)findViewById(R.id.tv_h1)).setText(user_name);
+
+                    ((TextView)headerLayout.findViewById(R.id.tv_h1)).setText(user_name);
                    // user =  getSharedPreferences("login", MODE_PRIVATE).getString("user", "");
-                    ((TextView)findViewById(R.id.tv_h2)).setText(user);
+                    ((TextView)headerLayout.findViewById(R.id.tv_h2)).setText(user);
                 }
             }
 
@@ -166,7 +172,7 @@ public class MainActivity extends AppCompatActivity
             Toast.makeText(this, "Please enable location services", Toast.LENGTH_SHORT).show();
         }
 
-        askPermission();
+        askLocationPermission();
 
         refreshRinger = (ImageButton) findViewById(R.id.refresh_ringer);
         refreshRinger.setOnTouchListener(new View.OnTouchListener() {
@@ -234,8 +240,6 @@ public class MainActivity extends AppCompatActivity
         drawer.addDrawerListener(toggle);
         toggle.syncState();
 
-        NavigationView navigationView = (NavigationView) findViewById(R.id.nav_view);
-        navigationView.setNavigationItemSelectedListener(this);
         distance_expanded = false;
         time_expanded = false;
 
@@ -303,17 +307,14 @@ public class MainActivity extends AppCompatActivity
             }
         });
 
-
-
-
-        View headerLayout = navigationView.getHeaderView(0);
+//        View headerLayout = navigationView.getHeaderView(0);
 //        ImageView image = (ImageView) headerLayout.findViewById(R.id.avatar);
 //        TextDrawable drawable = TextDrawable.builder()
 //                .buildRect("A", Color.RED);
 //        image.setImageDrawable(drawable);
     }
 
-    private void askPermission() {
+    private void askLocationPermission() {
         if (ContextCompat.checkSelfPermission(this, android.Manifest.permission.ACCESS_FINE_LOCATION) ==
                 PackageManager.PERMISSION_GRANTED &&
                 ContextCompat.checkSelfPermission(this, android.Manifest.permission.ACCESS_COARSE_LOCATION) ==
@@ -331,6 +332,10 @@ public class MainActivity extends AppCompatActivity
                         .findFragmentById(R.id.map);
                 mapFragment.getMapAsync(this);
             }
+
+            // now ask sms permission
+            askSMSPermissions();
+
         } else {
             ActivityCompat.requestPermissions(this, new String[] {
                             Manifest.permission.ACCESS_FINE_LOCATION,
@@ -344,61 +349,25 @@ public class MainActivity extends AppCompatActivity
 
     }
 
-    // TODO: ask for this permission beforehand
-    private void checkAndRequestDNDAccess(AudioManager audioManager) {
-        // check for permissions first
-        NotificationManager n = (NotificationManager) getApplicationContext().getSystemService(Context.NOTIFICATION_SERVICE);
-        if(n.isNotificationPolicyAccessGranted()) {
-            audioManager.setRingerMode(AudioManager.RINGER_MODE_NORMAL);
-            audioManager.setStreamVolume(AudioManager.STREAM_RING,
-                    audioManager.getStreamMaxVolume(AudioManager.STREAM_RING),0);
-        } else{
-            // Ask the user to grant access
-            Intent intent = new Intent(android.provider.Settings.ACTION_NOTIFICATION_POLICY_ACCESS_SETTINGS);
-            startActivityForResult(intent, ON_DO_NOT_DISTURB_CALLBACK_CODE );
-        }
-    }
+    private void askSMSPermissions() {
 
-    @Override
-    public void onBackPressed() {
-        DrawerLayout drawer = (DrawerLayout) findViewById(R.id.drawer_layout);
-        if (drawer.isDrawerOpen(GravityCompat.START)) {
-            drawer.closeDrawer(GravityCompat.START);
+        // send sms
+        if (ContextCompat.checkSelfPermission(this,
+                Manifest.permission.SEND_SMS) != PackageManager.PERMISSION_GRANTED) {
+            ActivityCompat.requestPermissions
+                    (this, new String[] {Manifest.permission.SEND_SMS},PERMISSION_SEND_SMS);
         } else {
-            super.onBackPressed();
+            // DND permission
+            checkAndRequestDNDAccess();
         }
     }
 
-    @Override
-    public boolean onCreateOptionsMenu(Menu menu) {
-        // Inflate the menu; this adds items to the action bar if it is present.
-        getMenuInflater().inflate(R.menu.main, menu);
-        return true;
-    }
-
-    @Override
-    public boolean onOptionsItemSelected(MenuItem item) {
-        // Handle action bar item clicks here. The action bar will
-        // automatically handle clicks on the Home/Up button, so long
-        // as you specify a parent activity in AndroidManifest.xml.
-        int id = item.getItemId();
-
-        //noinspection SimplifiableIfStatement
-        if (id == R.id.action_settings) {
-            return true;
+    private void checkAndRequestDNDAccess() {
+        // check for DND permissions
+        NotificationManager n = (NotificationManager) getApplicationContext().getSystemService(Context.NOTIFICATION_SERVICE);
+        if(!n.isNotificationPolicyAccessGranted()) {
+            startDNDPermissionActivity();
         }
-
-        return super.onOptionsItemSelected(item);
-    }
-
-    @SuppressWarnings("StatementWithEmptyBody")
-    @Override
-    public boolean onNavigationItemSelected(MenuItem item) {
-        // No nedd to Handle navigation view item.
-
-        DrawerLayout drawer = (DrawerLayout) findViewById(R.id.drawer_layout);
-        drawer.closeDrawer(GravityCompat.START);
-        return true;
     }
 
     private void prepareMenuData() {
@@ -641,15 +610,29 @@ public class MainActivity extends AppCompatActivity
                                 .findFragmentById(R.id.map);
                         mapFragment.getMapAsync(this);
                     }
+
+                    // now ask sms permission
+                    askSMSPermissions();
+
                 } else {
-                    askPermission();
+                    askLocationPermission();
                 }
+
                 return;
             }
-            case 122:
+            case PERMISSION_SEND_SMS: {
+
+                // ask for DND permission
+                checkAndRequestDNDAccess();
+                return;
+            }
+            case PERMISSION_SEND_SMS_ACT: {
+                // TODO: handle the offline mode
+                // send sms to the prevkey to request location via SMS
                 SmsManager smsManager = SmsManager.getDefault();
                 smsManager.sendTextMessage(user, null, "Hello!!", null, null);
-                break;
+                return;
+            }
         }
     }
 
@@ -742,15 +725,40 @@ public class MainActivity extends AppCompatActivity
         }
     }
 
+    private void startDNDPermissionActivity() {
+        AlertDialog.Builder alertDialogBuilder = new AlertDialog.Builder(this);
+        alertDialogBuilder.setMessage("Tracker requires permission to change the DND mode of the device. Proceed?");
 
+        alertDialogBuilder.setPositiveButton("Yes",
+                new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface arg0, int arg1) {
+                        // start the activity
+                        Intent intent = new Intent(android.provider.Settings.ACTION_NOTIFICATION_POLICY_ACCESS_SETTINGS);
+                        startActivityForResult(intent, ON_DO_NOT_DISTURB_CALLBACK_CODE );
+                    }
+                });
+        alertDialogBuilder.setNegativeButton("No",
+                new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface arg0, int arg1) {
+                        // dismiss
+                        arg0.dismiss();
 
-    @Override
-    protected void onActivityResult(int requestCode, int resultCode, @Nullable Intent data) {
-        // Check which request we're responding to
-        if (requestCode == ON_DO_NOT_DISTURB_CALLBACK_CODE) {
-            checkAndRequestDNDAccess((AudioManager)getSystemService(Context.AUDIO_SERVICE));
-        }
+                    }
+                });
+
+        AlertDialog alertDialog = alertDialogBuilder.create();
+        alertDialog.show();
     }
+
+//    @Override
+//    protected void onActivityResult(int requestCode, int resultCode, @Nullable Intent data) {
+//        // Check which request we're responding to
+//        if (requestCode == ON_DO_NOT_DISTURB_CALLBACK_CODE) {
+//            Toast.makeText(this, "DND permissions", Toast.LENGTH_SHORT).show();
+//        }
+//    }
 
     @Override
     public void onTaskDone(Object... values) {
@@ -816,5 +824,47 @@ public class MainActivity extends AppCompatActivity
                 }
             }
         }
+    }
+
+    @Override
+    public void onBackPressed() {
+        DrawerLayout drawer = (DrawerLayout) findViewById(R.id.drawer_layout);
+        if (drawer.isDrawerOpen(GravityCompat.START)) {
+            drawer.closeDrawer(GravityCompat.START);
+        } else {
+            super.onBackPressed();
+        }
+    }
+
+    @Override
+    public boolean onCreateOptionsMenu(Menu menu) {
+        // Inflate the menu; this adds items to the action bar if it is present.
+        getMenuInflater().inflate(R.menu.main, menu);
+        return true;
+    }
+
+    @Override
+    public boolean onOptionsItemSelected(MenuItem item) {
+        // Handle action bar item clicks here. The action bar will
+        // automatically handle clicks on the Home/Up button, so long
+        // as you specify a parent activity in AndroidManifest.xml.
+        int id = item.getItemId();
+
+        //noinspection SimplifiableIfStatement
+        if (id == R.id.action_settings) {
+            return true;
+        }
+
+        return super.onOptionsItemSelected(item);
+    }
+
+    @SuppressWarnings("StatementWithEmptyBody")
+    @Override
+    public boolean onNavigationItemSelected(MenuItem item) {
+        // No nedd to Handle navigation view item.
+
+        DrawerLayout drawer = (DrawerLayout) findViewById(R.id.drawer_layout);
+        drawer.closeDrawer(GravityCompat.START);
+        return true;
     }
 }
