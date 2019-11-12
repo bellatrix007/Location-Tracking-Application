@@ -1,7 +1,6 @@
 package com.bellatrix.aditi.tracker.Utils;
 
-import android.util.Log;
-
+import com.bellatrix.aditi.tracker.DatabaseClasses.MapTraversal;
 import com.google.android.gms.maps.model.LatLng;
 
 import org.json.JSONArray;
@@ -13,13 +12,13 @@ import java.util.HashMap;
 import java.util.List;
 
 public class DataParser {
-    public List<List<HashMap<String, String>>> parse(JSONObject jObject) {
+    public MapTraversal parse(JSONObject jObject) {
 
         List<List<HashMap<String, String>>> routes = new ArrayList<>();
         JSONArray jRoutes;
         JSONArray jLegs;
         JSONArray jSteps;
-        String distance, time;
+        String distance = "", duration = "";
 
         try {
             jRoutes = jObject.getJSONArray("routes");
@@ -32,9 +31,7 @@ public class DataParser {
 
                     // get distance
                     distance = (String) ((JSONObject) ((JSONObject) jLegs.get(j)).get("distance")).get("text");
-                    time = (String) ((JSONObject) ((JSONObject) jLegs.get(j)).get("duration")).get("text");
-
-                    Log.d("mylog", distance +" "+time);
+                    duration = (String) ((JSONObject) ((JSONObject) jLegs.get(j)).get("duration")).get("text");
 
                     jSteps = ((JSONObject) jLegs.get(j)).getJSONArray("steps");
 
@@ -60,7 +57,7 @@ public class DataParser {
             e.printStackTrace();
         } catch (Exception e) {
         }
-        return routes;
+        return new MapTraversal(distance, duration, routes);
     }
 
 

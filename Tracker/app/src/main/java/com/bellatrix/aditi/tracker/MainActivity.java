@@ -756,8 +756,10 @@ public class MainActivity extends AppCompatActivity
     public void onTaskDone(Object... values) {
         if (mPolyline != null)
             mPolyline.remove();
-        mPolyline = mMap.addPolyline((PolylineOptions) values[0]);
+        mPolyline = mMap.addPolyline((PolylineOptions) values[2]);
 
+        // TODO: show distance and duration
+        Log.d("mylog", "In main" + values[0] + " " + values[1]);
     }
 
     @Override
