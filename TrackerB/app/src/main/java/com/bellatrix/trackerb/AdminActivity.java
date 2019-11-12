@@ -45,8 +45,6 @@ import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.widget.Toolbar;
 
 import android.view.Menu;
-import android.widget.LinearLayout;
-import android.widget.Toast;
 
 import static com.bellatrix.trackerb.Utils.CommonFunctions.getUrl;
 

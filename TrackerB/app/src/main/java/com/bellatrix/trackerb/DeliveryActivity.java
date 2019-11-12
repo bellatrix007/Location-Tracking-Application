@@ -1,18 +1,56 @@
 package com.bellatrix.trackerb;
 
+import android.Manifest;
+import android.app.ActivityManager;
+import android.content.Context;
+import android.content.Intent;
+import android.content.SharedPreferences;
+import android.content.pm.PackageManager;
+import android.location.Location;
 import android.os.Bundle;
 
+import com.bellatrix.trackerb.Utils.FetchURL;
+import com.bellatrix.trackerb.Utils.TaskLoadedCallback;
+import com.google.android.gms.location.FusedLocationProviderClient;
+import com.google.android.gms.location.LocationCallback;
+import com.google.android.gms.location.LocationRequest;
+import com.google.android.gms.location.LocationResult;
+import com.google.android.gms.location.LocationServices;
+import com.google.android.gms.maps.CameraUpdateFactory;
+import com.google.android.gms.maps.GoogleMap;
+import com.google.android.gms.maps.OnMapReadyCallback;
+import com.google.android.gms.maps.SupportMapFragment;
+import com.google.android.gms.maps.model.LatLng;
+import com.google.android.gms.maps.model.LatLngBounds;
+import com.google.android.gms.maps.model.Marker;
+import com.google.android.gms.maps.model.MarkerOptions;
+import com.google.android.gms.maps.model.Polyline;
+import com.google.android.gms.maps.model.PolylineOptions;
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
 import com.google.android.material.snackbar.Snackbar;
 
+import android.telephony.SmsManager;
+import android.util.Log;
+import android.view.MenuItem;
 import android.view.View;
 
+import androidx.annotation.NonNull;
+import androidx.appcompat.app.ActionBarDrawerToggle;
+import androidx.constraintlayout.widget.ConstraintLayout;
+import androidx.core.app.ActivityCompat;
+import androidx.core.content.ContextCompat;
+import androidx.core.view.GravityCompat;
 import androidx.navigation.NavController;
 import androidx.navigation.Navigation;
 import androidx.navigation.ui.AppBarConfiguration;
 import androidx.navigation.ui.NavigationUI;
 
 import com.google.android.material.navigation.NavigationView;
+import com.google.firebase.database.DataSnapshot;
+import com.google.firebase.database.DatabaseError;
+import com.google.firebase.database.DatabaseReference;
+import com.google.firebase.database.FirebaseDatabase;
+import com.google.firebase.database.ValueEventListener;
 
 import androidx.drawerlayout.widget.DrawerLayout;
 
@@ -20,10 +58,34 @@ import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.widget.Toolbar;
 
 import android.view.Menu;
+import android.widget.LinearLayout;
+import android.widget.Toast;
 
-public class DeliveryActivity extends AppCompatActivity {
+import static com.bellatrix.trackerb.Utils.CommonFunctions.getUrl;
+
+public class DeliveryActivity extends AppCompatActivity
+        implements NavigationView.OnNavigationItemSelectedListener, OnMapReadyCallback, TaskLoadedCallback {
+
+    private static final int PERMISSION_LOCATION = 1234;
+
+    private String user;
+    private boolean isIdle;
+    private Intent trackerServiceIntent;
+
+    private FirebaseDatabase firebaseDatabase;
+    private DatabaseReference databaseReference;
+
+    private GoogleMap mMap;
+    private Polyline mPolyline;
+    private LatLng currLocation, cusLoc;
+    private ValueEventListener markerListener, customerListener;
+    private Marker mMarker;
+    private String order, customer;
+    private boolean newOrder;
 
     private AppBarConfiguration mAppBarConfiguration;
+    private ConstraintLayout nomapLayout;
+    private FloatingActionButton call, delivered;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -31,15 +93,95 @@ public class DeliveryActivity extends AppCompatActivity {
         setContentView(R.layout.activity_delivery);
         Toolbar toolbar = findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
-        FloatingActionButton fab = findViewById(R.id.fab);
-        fab.setOnClickListener(new View.OnClickListener() {
+
+        user = getSharedPreferences("login", MODE_PRIVATE).getString("user", "");
+        isIdle = true;
+        order = "";
+        newOrder = false;
+
+        firebaseDatabase = FirebaseDatabase.getInstance();
+        databaseReference = firebaseDatabase.getReference();
+
+        nomapLayout = findViewById(R.id.ll_nomap);
+
+        databaseReference.child("delivery").child(user).addValueEventListener(new ValueEventListener() {
+            @Override
+            public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
+                if(dataSnapshot.child("idle").getValue().toString().equals("true"))
+                {
+                    isIdle = true;
+                    nomapLayout.setVisibility(View.VISIBLE);
+
+                    if(nomapLayout.getVisibility()==View.VISIBLE) {
+                        Toast.makeText(DeliveryActivity.this, "VISIBLE", Toast.LENGTH_SHORT).show();
+                    }
+                    // reinitialize map
+                    if(mMarker!=null)
+                        mMarker.remove();
+                    if(mPolyline!=null)
+                        mPolyline.remove();
+                    if(markerListener!=null)
+                        databaseReference.child("location").child(customer).removeEventListener(markerListener);
+                    updateCameraBounds();
+                }
+                else {
+                    isIdle = false;
+                    newOrder = true;
+                    nomapLayout.setVisibility(View.GONE);
+
+                    // set update for customer location
+                    order = dataSnapshot.child("order").getValue().toString();
+
+                    // get customer id from order
+                    customerListener = databaseReference.child("order").child(order)
+                            .child("customer").addValueEventListener(new ValueEventListener() {
+                        @Override
+                        public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
+                            customer = dataSnapshot.getValue().toString();
+                            setUpdates(customer);
+
+                            Log.d("mylog", dataSnapshot+"");
+                        }
+
+                        @Override
+                        public void onCancelled(@NonNull DatabaseError databaseError) {
+
+                        }
+                    });
+                }
+            }
+
+            @Override
+            public void onCancelled(@NonNull DatabaseError databaseError) {
+
+            }
+        });
+
+        call = findViewById(R.id.fab_call);
+        call.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                Snackbar.make(view, "Replace with your own action", Snackbar.LENGTH_LONG)
+                Snackbar.make(view, "Call", Snackbar.LENGTH_LONG)
                         .setAction("Action", null).show();
             }
         });
+
+        delivered = findViewById(R.id.fab_delivered);
+        delivered.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+
+            }
+        });
+
+
+        askPermission();
+
         DrawerLayout drawer = findViewById(R.id.drawer_layout);
+        ActionBarDrawerToggle toggle = new ActionBarDrawerToggle(
+                this, drawer, toolbar, R.string.navigation_drawer_open, R.string.navigation_drawer_close);
+        drawer.addDrawerListener(toggle);
+        toggle.syncState();
         NavigationView navigationView = findViewById(R.id.nav_view);
         // Passing each menu ID as a set of Ids because each
         // menu should be considered as top level destinations.
@@ -48,9 +190,194 @@ public class DeliveryActivity extends AppCompatActivity {
                 R.id.nav_tools, R.id.nav_share, R.id.nav_send)
                 .setDrawerLayout(drawer)
                 .build();
-        NavController navController = Navigation.findNavController(this, R.id.nav_host_fragment);
-        NavigationUI.setupActionBarWithNavController(this, navController, mAppBarConfiguration);
-        NavigationUI.setupWithNavController(navigationView, navController);
+        navigationView.setNavigationItemSelectedListener(this);
+    }
+
+    private void setUpdates(String key) {
+        markerListener = databaseReference.child("location").child(key)
+                .addValueEventListener(new ValueEventListener() {
+            @Override
+            public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
+
+                double lat = Double.parseDouble(dataSnapshot.child("latitude").getValue().toString());
+                double lng = Double.parseDouble(dataSnapshot.child("longitude").getValue().toString());
+                cusLoc = new LatLng(lat, lng);
+                setMarker();
+            }
+
+            @Override
+            public void onCancelled(@NonNull DatabaseError databaseError) {
+
+            }
+        });
+    }
+
+    private void setMarker() {
+        if(mMap==null)
+            return;
+
+        if(mMarker == null)
+        {
+            mMarker = mMap.addMarker(new MarkerOptions().position(cusLoc).title(customer));
+        }
+        else
+        {
+            mMarker.setTitle(customer);
+            mMarker.setPosition(cusLoc);
+        }
+        mMarker.showInfoWindow();
+        updateCameraBounds();
+        new FetchURL(DeliveryActivity.this)
+                .execute(getUrl(currLocation, cusLoc, "driving", getString(R.string.google_maps_key)), "driving");
+    }
+
+    private void getCurrentLocation() {
+
+        LocationRequest request = new LocationRequest();
+        request.setInterval(30000);
+        request.setFastestInterval(10000);
+        request.setSmallestDisplacement(1);
+        request.setPriority(LocationRequest.PRIORITY_HIGH_ACCURACY);
+        FusedLocationProviderClient client = LocationServices.getFusedLocationProviderClient(this);
+        int permission = ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION);
+        if (permission == PackageManager.PERMISSION_GRANTED) {
+            // Request location updates and when an update is
+            // received, store the location in Firebase
+            client.requestLocationUpdates(request, new LocationCallback() {
+                @Override
+                public void onLocationResult(LocationResult locationResult) {
+                    Location location = locationResult.getLastLocation();
+                    if (location != null) {
+                        currLocation = new LatLng(location.getLatitude(), location.getLongitude());
+                        updateCameraBounds();
+
+                        if(!isIdle)
+                            new FetchURL(DeliveryActivity.this)
+                                    .execute(getUrl(currLocation, cusLoc, "driving", getString(R.string.google_maps_key)),
+                                            "driving");
+                    }
+                }
+            }, null);
+        }
+    }
+
+    private void updateCameraBounds() {
+        if(mMap==null)
+            return;
+
+        // initial user's location only
+        if(isIdle) {
+            mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(currLocation, 15));
+        } else {
+            // set bounds if a new user
+            if(newOrder) {
+
+                newOrder = false;
+
+                LatLngBounds.Builder builder = new LatLngBounds.Builder();
+                builder.include(currLocation);
+                builder.include(cusLoc);
+                mMap.animateCamera(CameraUpdateFactory.newLatLngBounds(builder.build(), 20));
+
+                // remove customer listener
+                databaseReference.child("order").child("customer").removeEventListener(customerListener);
+            }
+            // else do nothing
+        }
+    }
+
+    @Override
+    public void onMapReady(GoogleMap googleMap) {
+        mMap = googleMap;
+
+        // update the user's location
+        mMap.setMyLocationEnabled(true);
+        mMap.getUiSettings().setMyLocationButtonEnabled(true);
+    }
+
+    private void askPermission() {
+        if (ContextCompat.checkSelfPermission(this, android.Manifest.permission.ACCESS_FINE_LOCATION) ==
+                PackageManager.PERMISSION_GRANTED &&
+                ContextCompat.checkSelfPermission(this, android.Manifest.permission.ACCESS_COARSE_LOCATION) ==
+                        PackageManager.PERMISSION_GRANTED) {
+            // Start the service when the permission is granted
+            startTrackerService();
+
+            // also start location extraction here
+            getCurrentLocation();
+
+            if(mMap == null) {
+                // start the maps fragment
+                // Obtain the SupportMapFragment and get notified when the map is ready to be used.
+                SupportMapFragment mapFragment = (SupportMapFragment) getSupportFragmentManager()
+                        .findFragmentById(R.id.map);
+                mapFragment.getMapAsync(this);
+            }
+        } else {
+            ActivityCompat.requestPermissions(this, new String[] {
+                            Manifest.permission.ACCESS_FINE_LOCATION,
+                            Manifest.permission.ACCESS_COARSE_LOCATION },
+                    PERMISSION_LOCATION);
+        }
+    }
+
+    public void onRequestPermissionsResult(int requestCode,
+                                           String[] permissions, int[] grantResults) {
+        switch (requestCode) {
+            case PERMISSION_LOCATION: {
+                // If request is cancelled, the result arrays are empty.
+                if (grantResults.length > 0
+                        && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+                    // Start the service when the permission is granted
+                    startTrackerService();
+
+                    // also start location extraction here
+                    getCurrentLocation();
+
+                    if (mMap == null) {
+                        // start the maps fragment
+                        // Obtain the SupportMapFragment and get notified when the map is ready to be used.
+                        SupportMapFragment mapFragment = (SupportMapFragment) getSupportFragmentManager()
+                                .findFragmentById(R.id.map);
+                        mapFragment.getMapAsync(this);
+                    }
+                } else {
+                    askPermission();
+                }
+                return;
+            }
+        }
+    }
+
+    private void startTrackerService() {
+        trackerServiceIntent = new Intent(this, TrackerService.class);
+
+        if (!isMyServiceRunning()) {
+            startService(trackerServiceIntent);
+        }
+    }
+
+    private boolean isMyServiceRunning() {
+        TrackerService trackerService = new TrackerService(this);
+
+        ActivityManager manager = (ActivityManager) getSystemService(Context.ACTIVITY_SERVICE);
+        for (ActivityManager.RunningServiceInfo service : manager.getRunningServices(Integer.MAX_VALUE)) {
+            if (trackerService.getClass().equals(service.service.getClassName())) {
+                Log.i ("isMyServiceRunning?", true+"");
+                return true;
+            }
+        }
+        Log.i ("isMyServiceRunning?", false+"");
+        return false;
+    }
+
+    private void goToLogin() {
+        startActivity(new Intent(this, LoginActivity.class));
+        SharedPreferences.Editor spEdit = getSharedPreferences("login", MODE_PRIVATE).edit();
+        spEdit.putInt("logged", 0);
+        spEdit.putString("user", "");
+        spEdit.apply();
+        finish();
     }
 
     @Override
@@ -65,5 +392,38 @@ public class DeliveryActivity extends AppCompatActivity {
         NavController navController = Navigation.findNavController(this, R.id.nav_host_fragment);
         return NavigationUI.navigateUp(navController, mAppBarConfiguration)
                 || super.onSupportNavigateUp();
+    }
+
+    @Override
+    public boolean onNavigationItemSelected(@NonNull MenuItem menuItem) {
+        switch (menuItem.getItemId()){
+            case R.id.logout:
+                goToLogin();
+                break;
+            default:    // view order
+
+        }
+
+        DrawerLayout drawer = (DrawerLayout) findViewById(R.id.drawer_layout);
+        drawer.closeDrawer(GravityCompat.START);
+        return true;
+    }
+
+    // if we do not stop it, the service will die with our app.
+    // Instead, by stopping the service,
+    // we will force the service to call its own onDestroy which will force it to recreate itself
+    // after the app is dead.
+    @Override
+    protected void onDestroy() {
+        stopService(trackerServiceIntent);
+        Log.d("Service", "ondestroy of activity!");
+        super.onDestroy();
+    }
+
+    @Override
+    public void onTaskDone(Object... values) {
+        if (mPolyline != null)
+            mPolyline.remove();
+        mPolyline = mMap.addPolyline((PolylineOptions) values[0]);
     }
 }
