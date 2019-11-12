@@ -39,12 +39,13 @@ public class AddUserDialogFragment extends DialogFragment {
      * Create a new instance of AddUserDialogFragment, providing "user"
      * as an argument.
      */
-    static AddUserDialogFragment newInstance(String user) {
+    static AddUserDialogFragment newInstance(String user, String user_name) {
         AddUserDialogFragment f = new AddUserDialogFragment();
 
         // Supply num input as an argument.
         Bundle args = new Bundle();
         args.putString("user", user);
+        args.putString("user_name", user_name);
         f.setArguments(args);
 
         return f;
@@ -74,6 +75,8 @@ public class AddUserDialogFragment extends DialogFragment {
             public void onShow(DialogInterface dialog) {
 
                 user = getArguments().getString("user","");
+                user_name = getArguments().getString("user_name","");
+                Log.d("user_name fetch",user_name);
                 neutral = mAlertDialog.getButton(AlertDialog.BUTTON_NEUTRAL);
                 positive = mAlertDialog.getButton(AlertDialog.BUTTON_POSITIVE);
                 et_user_phonenumber = ((EditText) AddUserDialogFragment.this.getDialog()
@@ -98,6 +101,7 @@ public class AddUserDialogFragment extends DialogFragment {
                         et_user_phonenumber.setText("");
                         tv_user_text.setVisibility(View.GONE);
                         iv_user_sign.setVisibility(View.GONE);
+                        positive.setVisibility(View.VISIBLE);
                         positive.setText("Search");
                     }
                 });
@@ -117,8 +121,7 @@ public class AddUserDialogFragment extends DialogFragment {
                             databaseReference.child("users").child(user).child("sent_req").child(add_user).setValue(add_user_name);
 
                             // add current user to pending request
-                            // TODO: get user_name
-                            databaseReference.child("users").child(add_user).child("pending_req").child(user).setValue("Help");
+                            databaseReference.child("users").child(add_user).child("pending_req").child(user).setValue(user_name);
 
                             // dismiss dialog
                             AddUserDialogFragment.this.getDialog().dismiss();
@@ -134,7 +137,7 @@ public class AddUserDialogFragment extends DialogFragment {
 
     private void searchForUser() {
 
-        add_user = et_user_phonenumber.getText().toString();
+        add_user = "+91" + et_user_phonenumber.getText().toString();
 
         // search for the user in the database
         Query searchQuery = databaseReference.child("users")
@@ -154,7 +157,6 @@ public class AddUserDialogFragment extends DialogFragment {
 
                 if(dataSnapshot.exists()) {
                     //Key exists
-                    // TODO: Also print the user name in UI
                     add_user_name = dataSnapshot.child(add_user).child("name").getValue().toString();
 
                     Log.d("User","User exists " + add_user_name);
@@ -163,6 +165,7 @@ public class AddUserDialogFragment extends DialogFragment {
 
                 } else {
                     Log.d("User","User does not exist");
+                    positive.setVisibility(View.GONE);
                     tv_user_text.setText("User does not exist");
                     iv_user_sign.setImageDrawable(ResourcesCompat.getDrawable(getResources(), R.drawable.ic_cross, null));
                 }

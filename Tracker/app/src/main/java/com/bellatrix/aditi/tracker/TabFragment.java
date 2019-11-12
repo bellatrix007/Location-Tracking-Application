@@ -26,6 +26,7 @@ public class TabFragment extends Fragment {
 
     private int type;
     private String user;
+    private String user_name;
     private ArrayList<Request> requests= new ArrayList<>();
 
     private RecyclerView recyclerView;
@@ -34,10 +35,12 @@ public class TabFragment extends Fragment {
     private FirebaseDatabase firebaseDatabase;
     private DatabaseReference databaseReference;
 
-    public static Fragment getInstance(String user, int position) {
+    public static Fragment getInstance(String user_name,String user, int position) {
         Bundle bundle = new Bundle();
         bundle.putString("user", user);
         bundle.putInt("pos", position);
+        bundle.putString("user_name",user_name);
+        Log.d("user_name","user name fetched in Tab Fragment"+ user_name);
         TabFragment tabFragment = new TabFragment();
         tabFragment.setArguments(bundle);
         return tabFragment;
@@ -48,6 +51,7 @@ public class TabFragment extends Fragment {
         super.onCreate(savedInstanceState);
         user = getArguments().getString("user");
         type = getArguments().getInt("pos");
+        user_name = getArguments().getString("user_name");
     }
 
     @Nullable
@@ -68,7 +72,7 @@ public class TabFragment extends Fragment {
                 layoutManager.getOrientation());
         recyclerView.addItemDecoration(dividerItemDecoration);
 
-        requestAdapter = new RequestAdapter(user, type, requests);
+        requestAdapter = new RequestAdapter(user,user_name, type, requests);
         recyclerView.setAdapter(requestAdapter);
 
         // get requests list according to type
@@ -99,7 +103,7 @@ public class TabFragment extends Fragment {
                     requests.add(new Request(pending_user, pending_user_name));
                 }
 
-                requestAdapter = new RequestAdapter(user, type, requests);
+                requestAdapter = new RequestAdapter(user,user_name, type, requests);
                 recyclerView.setAdapter(requestAdapter);
             }
 

@@ -1,5 +1,6 @@
 package com.bellatrix.aditi.tracker;
 
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -24,14 +25,17 @@ public class RequestAdapter extends RecyclerView.Adapter<RequestAdapter.FolderVi
 
     private int type;
     private String user;
+    private String user_name;
     private List<Request> requests;
 
     private FirebaseDatabase firebaseDatabase;
     private DatabaseReference databaseReference;
 
-    RequestAdapter(String user, int type, List<Request> requests)
+    RequestAdapter(String user, String user_name, int type, List<Request> requests)
     {
         this.user = user;
+        this.user_name = user_name;
+        Log.d("user_name","user name fetched in Requests Adapter"+ user_name);
         this.type = type;
         this.requests = requests;
         firebaseDatabase = FirebaseDatabase.getInstance();
@@ -95,8 +99,7 @@ public class RequestAdapter extends RecyclerView.Adapter<RequestAdapter.FolderVi
                     // sharing_to
                     databaseReference.child("users").child(user).child("sharing_to").child(user1).setValue(user1_name);
                     // seeing_of
-                    // TODO: add user name
-                    databaseReference.child("users").child(user1).child("seeing_of").child(user).setValue("Help");
+                    databaseReference.child("users").child(user1).child("seeing_of").child(user).setValue(user_name);
 
                 }
             });

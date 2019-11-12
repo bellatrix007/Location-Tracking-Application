@@ -21,12 +21,14 @@ import android.util.Log;
 import android.view.View;
 import android.view.Menu;
 import android.view.MenuItem;
+import android.view.ViewGroup;
 import android.widget.ExpandableListView;
 import android.widget.ImageButton;
 import android.widget.LinearLayout;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import androidx.annotation.DrawableRes;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.ActionBarDrawerToggle;
@@ -34,6 +36,7 @@ import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.widget.Toolbar;
 import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
+import androidx.core.content.res.ResourcesCompat;
 import androidx.core.view.GravityCompat;
 import androidx.drawerlayout.widget.DrawerLayout;
 
@@ -97,7 +100,8 @@ public class MainActivity extends AppCompatActivity
     private LatLng prevLocation;
     private ValueEventListener markerListener;
     private Polyline mPolyline;
-
+    private Boolean distance_expanded;
+    private Boolean time_expanded;
     private LatLng currLocation;
 
     private ImageButton refreshRinger, updateRinger;
@@ -213,6 +217,41 @@ public class MainActivity extends AppCompatActivity
 
         NavigationView navigationView = (NavigationView) findViewById(R.id.nav_view);
         navigationView.setNavigationItemSelectedListener(this);
+        distance_expanded = false;
+        time_expanded = false;
+
+        final LinearLayout distance = (LinearLayout) findViewById(R.id.distanceLayout);
+        final TextView distanceHead = (TextView) findViewById(R.id.distanceHead);
+        final TextView distanceText = (TextView) findViewById(R.id.distanceText);
+        ViewGroup.LayoutParams layoutParams = distance.getLayoutParams();
+        layoutParams.height = 150;
+        layoutParams.width = 150;
+        distance.setLayoutParams(layoutParams);
+        distance.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                if(distance_expanded)
+                {
+                    ViewGroup.LayoutParams layoutParams = distance.getLayoutParams();
+                    layoutParams.width = 150;
+                    distance.setLayoutParams(layoutParams);
+                    distance_expanded = false;
+                    distanceHead.setVisibility(View.VISIBLE);
+                    distanceText.setVisibility(View.GONE);
+                }
+                else
+                {
+                    ViewGroup.LayoutParams layoutParams = distance.getLayoutParams();
+                    layoutParams.width = 300;
+                    distance.setLayoutParams(layoutParams);
+                    distance_expanded = true;
+                    distance.setBackground(ContextCompat.getDrawable(MainActivity.this, R.drawable.expanded_button));
+                    distanceHead.setVisibility(View.GONE);
+                    distanceText.setVisibility(View.VISIBLE);
+                }
+            }
+        });
+
 
         View headerLayout = navigationView.getHeaderView(0);
 //        ImageView image = (ImageView) headerLayout.findViewById(R.id.avatar);
@@ -371,7 +410,7 @@ public class MainActivity extends AppCompatActivity
 
                         if(menu_item_name.equals("Add user")) {
                             // pop up add user dialog
-                            AddUserDialogFragment addUserDialogFragment = AddUserDialogFragment.newInstance(user);;
+                            AddUserDialogFragment addUserDialogFragment = AddUserDialogFragment.newInstance(user,user_name);;
                             addUserDialogFragment.show(getSupportFragmentManager(),"addUser");
 
                         } else if(menu_item_name.equals("View request")) {

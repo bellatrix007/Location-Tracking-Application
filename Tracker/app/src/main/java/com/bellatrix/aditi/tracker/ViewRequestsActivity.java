@@ -1,6 +1,7 @@
 package com.bellatrix.aditi.tracker;
 
 import android.os.Bundle;
+import android.util.Log;
 import android.view.MenuItem;
 
 import androidx.appcompat.app.AppCompatActivity;
@@ -16,6 +17,7 @@ public class ViewRequestsActivity extends AppCompatActivity  {
     private Toolbar toolbar;
     private TabLayout tabLayout;
     private ViewPager viewPager;
+    private String user_name;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -26,9 +28,10 @@ public class ViewRequestsActivity extends AppCompatActivity  {
         getSupportActionBar().setDisplayHomeAsUpEnabled(true);
 
         user = getIntent().getExtras().getString("user", "");
-
+        user_name = getSharedPreferences("login",MODE_PRIVATE).getString("user_name","");
+        Log.d("user_name","user name fetched in Requests Activity"+ user_name);
         viewPager = (ViewPager) findViewById(R.id.viewpager);
-        ViewPagerAdapter adapter = new ViewPagerAdapter(getSupportFragmentManager(), user);
+        ViewPagerAdapter adapter = new ViewPagerAdapter(getSupportFragmentManager(), user,user_name);
         viewPager.setAdapter(adapter);
 
         tabLayout = (TabLayout) findViewById(R.id.tabs);
