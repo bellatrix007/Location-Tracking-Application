@@ -1,5 +1,7 @@
 package com.bellatrix.aditi.tracker.Utils;
 
+import android.util.Log;
+
 import com.google.android.gms.maps.model.LatLng;
 
 import org.json.JSONArray;
@@ -17,6 +19,8 @@ public class DataParser {
         JSONArray jRoutes;
         JSONArray jLegs;
         JSONArray jSteps;
+        String distance, time;
+
         try {
             jRoutes = jObject.getJSONArray("routes");
             /** Traversing all routes */
@@ -25,6 +29,13 @@ public class DataParser {
                 List path = new ArrayList<>();
                 /** Traversing all legs */
                 for (int j = 0; j < jLegs.length(); j++) {
+
+                    // get distance
+                    distance = (String) ((JSONObject) ((JSONObject) jLegs.get(j)).get("distance")).get("text");
+                    time = (String) ((JSONObject) ((JSONObject) jLegs.get(j)).get("duration")).get("text");
+
+                    Log.d("mylog", distance +" "+time);
+
                     jSteps = ((JSONObject) jLegs.get(j)).getJSONArray("steps");
 
                     /** Traversing all steps */
