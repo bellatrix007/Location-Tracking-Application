@@ -136,6 +136,18 @@
                     android:layout_marginBottom="20dp"
                     android:textColor="#fff"
                     android:elevation="2dp"/>
+                <TextView
+                    android:id="@+id/RingerVolume"
+                    android:layout_width="150dp"
+                    android:layout_height="64dp"
+                    android:background="@drawable/expanded_button"
+                    android:layout_marginStart="10dp"
+                    android:layout_marginTop="20dp"
+                    android:text=""
+                    android:textSize="16dp"
+                    android:gravity="center"
+                    android:textColor="#FFFFFF"
+                    android:elevation="2dp" />
 
             </LinearLayout>
 

@@ -18,6 +18,7 @@ import android.provider.Telephony;
 import android.telephony.SmsManager;
 import android.telephony.SmsMessage;
 import android.util.Log;
+import android.view.MotionEvent;
 import android.view.View;
 import android.view.Menu;
 import android.view.MenuItem;
@@ -79,7 +80,12 @@ public class MainActivity extends AppCompatActivity
         DialogInterface.OnDismissListener, TaskLoadedCallback {
 
     private String user, user_name;
-
+//    private String[] appPermissions = {
+//            Manifest.permission.ACCESS_FINE_LOCATION,
+//            Manifest.permission.ACCESS_COARSE_LOCATION,
+//            Manifest.permission.SEND_SMS,
+//            Manifest.permission.RECEIVE_SMS
+//    };
     private static final int PERMISSION_LOCATION = 1234;
     private static final int ON_DO_NOT_DISTURB_CALLBACK_CODE = 1235;
 
@@ -167,43 +173,60 @@ public class MainActivity extends AppCompatActivity
         askPermission();
 
         refreshRinger = (ImageButton) findViewById(R.id.refresh_ringer);
-        refreshRinger.setOnClickListener(new View.OnClickListener() {
+        refreshRinger.setOnTouchListener(new View.OnTouchListener() {
             @Override
-            public void onClick(View view) {
-                // request for refresh ringer of a user in prevKey
-                if(!prevKey.equals("")) {
-                    databaseReference.child("users").child(prevKey).child("refresh_ringer").setValue(user);
+            public boolean onTouch(View v, MotionEvent event) {
+
+                switch(event.getAction()) {
+                    case MotionEvent.ACTION_DOWN:
+                        refreshRinger.setBackground(getDrawable(R.drawable.expanded_button_clicked));
+                        if(!prevKey.equals("")) {
+                            databaseReference.child("users").child(prevKey).child("refresh_ringer").setValue(user);
+                        }
+                        return true; // if you want to handle the touch event
+                    case MotionEvent.ACTION_UP:
+                        refreshRinger.setBackground(getDrawable(R.drawable.expanded_button));
+                        return true; // if you want to handle the touch event
                 }
+                return false;
             }
         });
 
         updateRinger = (ImageButton) findViewById(R.id.update_ringer);
-        updateRinger.setOnClickListener(new View.OnClickListener() {
+        updateRinger.setOnTouchListener(new View.OnTouchListener() {
             @Override
-            public void onClick(View view) {
-                // request for ringer update of a user in prevKey
-                if(!prevKey.equals("")) {
-                    databaseReference.child("users").child(prevKey).child("update_ringer").setValue(user);
+            public boolean onTouch(View v, MotionEvent event) {
+
+                switch(event.getAction()) {
+                    case MotionEvent.ACTION_DOWN:
+                        updateRinger.setBackground(getDrawable(R.drawable.expanded_button_clicked));
+                        if(!prevKey.equals("")) {
+                            databaseReference.child("users").child(prevKey).child("update_ringer").setValue(user);
+                        }
+                        return true; // if you want to handle the touch event
+                    case MotionEvent.ACTION_UP:
+                        updateRinger.setBackground(getDrawable(R.drawable.expanded_button));
+                        return true; // if you want to handle the touch event
                 }
+                return false;
             }
         });
-
-        FloatingActionButton fab = (FloatingActionButton) findViewById(R.id.fab);
-        fab.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                SmsManager smsManager = SmsManager.getDefault();
-                smsManager.sendTextMessage(prevKey,null,"Please send your location. Sent by Tracker!",
-                        null, null);
-                Snackbar.make(view, "Message sent to " + prevKey, Snackbar.LENGTH_LONG)
-                        .setAction("Action", null).show();
-
-                smsReceiver = new LocationSMSReceiver();
-                registerReceiver(smsReceiver, new IntentFilter("android.provider.Telephony.SMS_RECEIVED"));
-
-
-            }
-        });
+//        FloatingActionButton fab = (FloatingActionButton) findViewById(R.id.fab);
+//        fab.setOnClickListener(new View.OnClickListener() {
+//            @Override
+//            public void onClick(View view) {
+//                SmsManager smsManager = SmsManager.getDefault();
+//                smsManager.sendTextMessage(prevKey,null,"Please send your location. Sent by Tracker!",
+//                        null, null);
+//                Snackbar.make(view, "Message sent to " + prevKey, Snackbar.LENGTH_LONG)
+//                        .setAction("Action", null).show();
+//
+//                smsReceiver = new LocationSMSReceiver();
+//                registerReceiver(smsReceiver, new IntentFilter("android.provider.Telephony.SMS_RECEIVED"));
+//
+//
+//            }
+//        });
 
         expandableListView = findViewById(R.id.expandableListView);
         prepareMenuData();
@@ -407,7 +430,6 @@ public class MainActivity extends AppCompatActivity
         headerList.add(userMenuModel);
         childList.put(userMenuModel, null);
 
-        // TODO: experiment with child listener as well
         databaseReference.child("users").child(user).child("seeing_of").addValueEventListener(new ValueEventListener() {
             @Override
             public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
@@ -520,7 +542,7 @@ public class MainActivity extends AppCompatActivity
                     {
                         // update ringer info
                         prevRinger = ringer;
-                        // TODO: hook up UI
+                        ((TextView)findViewById(R.id.RingerVolume)).setText(prevRinger);
                     }
                 }
 
