@@ -7,6 +7,7 @@ import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
 import android.location.Location;
+import android.net.Uri;
 import android.os.Bundle;
 
 import com.bellatrix.trackerb.Utils.FetchURL;
@@ -67,6 +68,7 @@ public class DeliveryActivity extends AppCompatActivity
         implements NavigationView.OnNavigationItemSelectedListener, OnMapReadyCallback, TaskLoadedCallback {
 
     private static final int PERMISSION_LOCATION = 1234;
+    private static final int REQUEST_PHONE_CALL = 1235;
 
     private String user;
     private boolean isIdle;
@@ -140,7 +142,6 @@ public class DeliveryActivity extends AppCompatActivity
                             customer = dataSnapshot.getValue().toString();
                             setUpdates(customer);
 
-                            Log.d("mylog", dataSnapshot+"");
                         }
 
                         @Override
@@ -161,8 +162,14 @@ public class DeliveryActivity extends AppCompatActivity
         call.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                Snackbar.make(view, "Call", Snackbar.LENGTH_LONG)
-                        .setAction("Action", null).show();
+                Intent intent = new Intent(Intent.ACTION_CALL, Uri.parse("tel:" + customer));
+                // first check for permission
+                if (ContextCompat.checkSelfPermission(DeliveryActivity.this, Manifest.permission.CALL_PHONE) != PackageManager.PERMISSION_GRANTED) {
+                    ActivityCompat.requestPermissions(DeliveryActivity.this, new String[]{Manifest.permission.CALL_PHONE},REQUEST_PHONE_CALL);
+                }
+                else {
+                    startActivity(intent);
+                }
             }
         });
 
@@ -170,7 +177,24 @@ public class DeliveryActivity extends AppCompatActivity
         delivered.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
+                databaseReference.child("order").child(order).child("delivered").setValue("1");
 
+                // make delivery person idle
+                databaseReference.child("delivery").child(user).child("idle").setValue("true");
+                // remove order details
+                databaseReference.child("delivery").child(user).orderByKey().equalTo("order")
+                        .addListenerForSingleValueEvent(new ValueEventListener() {
+                    @Override
+                    public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
+                        for(DataSnapshot ds : dataSnapshot.getChildren())
+                            ds.getRef().removeValue();
+                    }
+
+                    @Override
+                    public void onCancelled(@NonNull DatabaseError databaseError) {
+
+                    }
+                });
             }
         });
 
@@ -346,8 +370,16 @@ public class DeliveryActivity extends AppCompatActivity
                 }
                 return;
             }
+            case REQUEST_PHONE_CALL: {
+                if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+                    startActivity(new Intent(Intent.ACTION_CALL, Uri.parse("tel:" + customer)));
+                }
+                return;
+            }
         }
     }
+
+
 
     private void startTrackerService() {
         trackerServiceIntent = new Intent(this, TrackerService.class);
