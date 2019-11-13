@@ -28,9 +28,7 @@ import com.google.android.gms.maps.model.MarkerOptions;
 import com.google.android.gms.maps.model.Polyline;
 import com.google.android.gms.maps.model.PolylineOptions;
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
-import com.google.android.material.snackbar.Snackbar;
 
-import android.telephony.SmsManager;
 import android.util.Log;
 import android.view.MenuItem;
 import android.view.View;
@@ -41,10 +39,7 @@ import androidx.constraintlayout.widget.ConstraintLayout;
 import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
 import androidx.core.view.GravityCompat;
-import androidx.navigation.NavController;
-import androidx.navigation.Navigation;
 import androidx.navigation.ui.AppBarConfiguration;
-import androidx.navigation.ui.NavigationUI;
 
 import com.google.android.material.navigation.NavigationView;
 import com.google.firebase.database.DataSnapshot;
@@ -59,7 +54,6 @@ import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.widget.Toolbar;
 
 import android.view.Menu;
-import android.widget.LinearLayout;
 import android.widget.Toast;
 
 import static com.bellatrix.trackerb.Utils.CommonFunctions.getUrl;
@@ -105,6 +99,8 @@ public class DeliveryActivity extends AppCompatActivity
         databaseReference = firebaseDatabase.getReference();
 
         nomapLayout = findViewById(R.id.ll_nomap);
+        call = findViewById(R.id.fab_call);
+        delivered = findViewById(R.id.fab_delivered);
 
         databaseReference.child("delivery").child(user).addValueEventListener(new ValueEventListener() {
             @Override
@@ -113,15 +109,18 @@ public class DeliveryActivity extends AppCompatActivity
                 {
                     isIdle = true;
                     nomapLayout.setVisibility(View.VISIBLE);
+                    call.hide();
+                    delivered.hide();
 
-                    if(nomapLayout.getVisibility()==View.VISIBLE) {
-                        Toast.makeText(DeliveryActivity.this, "VISIBLE", Toast.LENGTH_SHORT).show();
-                    }
                     // reinitialize map
                     if(mMarker!=null)
+                    {
                         mMarker.remove();
-                    if(mPolyline!=null)
+                        mMarker = null;
+                    }
+                    if(mPolyline!=null) {
                         mPolyline.remove();
+                    }
                     if(markerListener!=null)
                         databaseReference.child("location").child(customer).removeEventListener(markerListener);
                     updateCameraBounds();
@@ -130,6 +129,8 @@ public class DeliveryActivity extends AppCompatActivity
                     isIdle = false;
                     newOrder = true;
                     nomapLayout.setVisibility(View.GONE);
+                    call.show();
+                    delivered.show();
 
                     // set update for customer location
                     order = dataSnapshot.child("order").getValue().toString();
@@ -158,7 +159,6 @@ public class DeliveryActivity extends AppCompatActivity
             }
         });
 
-        call = findViewById(R.id.fab_call);
         call.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
@@ -173,7 +173,6 @@ public class DeliveryActivity extends AppCompatActivity
             }
         });
 
-        delivered = findViewById(R.id.fab_delivered);
         delivered.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
@@ -275,7 +274,7 @@ public class DeliveryActivity extends AppCompatActivity
                         currLocation = new LatLng(location.getLatitude(), location.getLongitude());
                         updateCameraBounds();
 
-                        if(!isIdle)
+                        if(!isIdle && cusLoc!=null)
                             new FetchURL(DeliveryActivity.this)
                                     .execute(getUrl(currLocation, cusLoc, "driving", getString(R.string.google_maps_key)),
                                             "driving");
@@ -294,7 +293,7 @@ public class DeliveryActivity extends AppCompatActivity
             mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(currLocation, 15));
         } else {
             // set bounds if a new user
-            if(newOrder) {
+            if(newOrder && cusLoc!=null) {
 
                 newOrder = false;
 
@@ -379,8 +378,6 @@ public class DeliveryActivity extends AppCompatActivity
         }
     }
 
-
-
     private void startTrackerService() {
         trackerServiceIntent = new Intent(this, TrackerService.class);
 
@@ -417,13 +414,6 @@ public class DeliveryActivity extends AppCompatActivity
         // Inflate the menu; this adds items to the action bar if it is present.
         getMenuInflater().inflate(R.menu.delivery, menu);
         return true;
-    }
-
-    @Override
-    public boolean onSupportNavigateUp() {
-        NavController navController = Navigation.findNavController(this, R.id.nav_host_fragment);
-        return NavigationUI.navigateUp(navController, mAppBarConfiguration)
-                || super.onSupportNavigateUp();
     }
 
     @Override

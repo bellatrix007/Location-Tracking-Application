@@ -579,8 +579,6 @@ public class MainActivity extends AppCompatActivity
         mMap.setOnMarkerClickListener(new GoogleMap.OnMarkerClickListener() {
             @Override
             public boolean onMarkerClick(Marker marker) {
-
-//                Toast.makeText(MainActivity.this, marker.getTitle(), Toast.LENGTH_SHORT).show();
                 // zoom in
                 mMap.animateCamera(CameraUpdateFactory.newLatLngZoom(marker.getPosition(), 20));
                 marker.showInfoWindow();

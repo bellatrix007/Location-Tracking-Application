@@ -27,10 +27,7 @@ import android.view.View;
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.ActionBarDrawerToggle;
 import androidx.core.view.GravityCompat;
-import androidx.navigation.NavController;
-import androidx.navigation.Navigation;
 import androidx.navigation.ui.AppBarConfiguration;
-import androidx.navigation.ui.NavigationUI;
 
 import com.google.android.material.navigation.NavigationView;
 import com.google.firebase.database.DataSnapshot;
@@ -52,18 +49,19 @@ public class AdminActivity extends AppCompatActivity
         implements NavigationView.OnNavigationItemSelectedListener, OnMapReadyCallback, TaskLoadedCallback {
 
     private String user, prevOrder, customer, delivery;
-    private boolean oldUser;
+    private boolean oldOrder;
+
     private GoogleMap mMap;
     private LatLng custLoc, delLoc;
     private Marker cMarker, dMarker;
+    private ValueEventListener markerListener, cusListener, delListener;
+    private Polyline mPolyline;
 
     private FirebaseDatabase firebaseDatabase;
     private DatabaseReference databaseReference;
 
     private SubMenu viewOrders;
     private AppBarConfiguration mAppBarConfiguration;
-    private ValueEventListener markerListener, cusListener, delListener;
-    private Polyline mPolyline;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -74,7 +72,7 @@ public class AdminActivity extends AppCompatActivity
 
         user = getSharedPreferences("login", MODE_PRIVATE).getString("user", "");
         prevOrder = "";
-        oldUser = false;
+        oldOrder = false;
 
         firebaseDatabase = FirebaseDatabase.getInstance();
         databaseReference = firebaseDatabase.getReference();
@@ -121,23 +119,11 @@ public class AdminActivity extends AppCompatActivity
             }
         });
 
-        SupportMapFragment mapFragment = (SupportMapFragment) getSupportFragmentManager()
-                .findFragmentById(R.id.map);
-        mapFragment.getMapAsync(this);
-    }
-
-    @Override
-    public boolean onCreateOptionsMenu(Menu menu) {
-        // Inflate the menu; this adds items to the action bar if it is present.
-        getMenuInflater().inflate(R.menu.admin, menu);
-        return true;
-    }
-
-    @Override
-    public boolean onSupportNavigateUp() {
-        NavController navController = Navigation.findNavController(this, R.id.nav_host_fragment);
-        return NavigationUI.navigateUp(navController, mAppBarConfiguration)
-                || super.onSupportNavigateUp();
+        if(mMap == null) {
+            SupportMapFragment mapFragment = (SupportMapFragment) getSupportFragmentManager()
+                    .findFragmentById(R.id.map);
+            mapFragment.getMapAsync(this);
+        }
     }
 
     @Override
@@ -182,7 +168,7 @@ public class AdminActivity extends AppCompatActivity
 
                 String user_key = ds.getKey();
                 if(!prevOrder.equals(user_key))
-                    oldUser = false;
+                    oldOrder = false;
 
                 // add 2 listeners, one for customer and one for delivery
                 customer = ds.child("customer").getValue().toString();
@@ -270,8 +256,8 @@ public class AdminActivity extends AppCompatActivity
             return;
 
         // initial user's location only
-        if(!oldUser && custLoc!=null && delLoc!=null) {
-            oldUser = true;
+        if(!oldOrder && custLoc!=null && delLoc!=null) {
+            oldOrder = true;
             LatLngBounds.Builder builder = new LatLngBounds.Builder();
             builder.include(custLoc);
             builder.include(delLoc);
@@ -294,5 +280,12 @@ public class AdminActivity extends AppCompatActivity
         if (mPolyline != null)
             mPolyline.remove();
         mPolyline = mMap.addPolyline((PolylineOptions) values[0]);
+    }
+
+    @Override
+    public boolean onCreateOptionsMenu(Menu menu) {
+        // Inflate the menu; this adds items to the action bar if it is present.
+        getMenuInflater().inflate(R.menu.admin, menu);
+        return true;
     }
 }
