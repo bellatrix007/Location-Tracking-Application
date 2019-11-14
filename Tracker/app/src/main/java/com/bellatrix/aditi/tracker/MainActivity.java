@@ -791,6 +791,9 @@ public class MainActivity extends AppCompatActivity
 
         // TODO: show distance and duration
         Log.d("mylog", "In main" + values[0] + " " + values[1]);
+
+        ((TextView)findViewById(R.id.distanceText)).setText(values[0].toString());
+        ((TextView)findViewById(R.id.timeText)).setText(values[1].toString());
     }
 
     @Override
