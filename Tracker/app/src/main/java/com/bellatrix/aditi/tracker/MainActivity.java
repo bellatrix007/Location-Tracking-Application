@@ -1,6 +1,7 @@
 package com.bellatrix.aditi.tracker;
 
 import android.Manifest;
+import android.annotation.SuppressLint;
 import android.app.ActivityManager;
 import android.app.Dialog;
 import android.app.NotificationManager;
@@ -176,13 +177,14 @@ public class MainActivity extends AppCompatActivity
 
         refreshRinger = (ImageButton) findViewById(R.id.refresh_ringer);
         refreshRinger.setOnTouchListener(new View.OnTouchListener() {
+            @SuppressLint("ClickableViewAccessibility")
             @Override
             public boolean onTouch(View v, MotionEvent event) {
 
-                switch(event.getAction()) {
+                switch (event.getAction()) {
                     case MotionEvent.ACTION_DOWN:
                         refreshRinger.setBackground(getDrawable(R.drawable.expanded_button_clicked));
-                        if(!prevKey.equals("")) {
+                        if (!prevKey.equals("")) {
                             databaseReference.child("users").child(prevKey).child("refresh_ringer").setValue(user);
                         }
                         return true; // if you want to handle the touch event
@@ -193,6 +195,9 @@ public class MainActivity extends AppCompatActivity
                 return false;
             }
         });
+
+
+
 
         updateRinger = (ImageButton) findViewById(R.id.update_ringer);
         updateRinger.setOnTouchListener(new View.OnTouchListener() {
@@ -213,6 +218,26 @@ public class MainActivity extends AppCompatActivity
                 return false;
             }
         });
+
+        final ImageButton updateOffline = (ImageButton) findViewById(R.id.update_offline);
+        updateOffline.setOnTouchListener(new View.OnTouchListener() {
+            @Override
+            public boolean onTouch(View v, MotionEvent event) {
+
+                switch(event.getAction()) {
+                    case MotionEvent.ACTION_DOWN:
+                        updateOffline.setBackground(getDrawable(R.drawable.expanded_button_clicked));
+
+                        //TODO: Add here the code to send msg to fetch location offine
+                        return true; // if you want to handle the touch event
+                    case MotionEvent.ACTION_UP:
+                        updateOffline.setBackground(getDrawable(R.drawable.expanded_button));
+                        return true; // if you want to handle the touch event
+                }
+                return false;
+            }
+        });
+
 //        FloatingActionButton fab = (FloatingActionButton) findViewById(R.id.fab);
 //        fab.setOnClickListener(new View.OnClickListener() {
 //            @Override
