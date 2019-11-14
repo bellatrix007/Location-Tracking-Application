@@ -9,6 +9,7 @@ import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
+import android.content.IntentFilter;
 import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
 import android.location.Location;
@@ -73,6 +74,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 
+import static com.bellatrix.aditi.tracker.Utils.CommonFunctions.MESSAGE_BODY;
 import static com.bellatrix.aditi.tracker.Utils.CommonFunctions.getUrl;
 
 // TODO: Manage all permissions
@@ -228,7 +230,14 @@ public class MainActivity extends AppCompatActivity
                     case MotionEvent.ACTION_DOWN:
                         updateOffline.setBackground(getDrawable(R.drawable.expanded_button_clicked));
 
-                        //TODO: Add here the code to send msg to fetch location offine
+                        if (ContextCompat.checkSelfPermission(MainActivity.this,
+                                Manifest.permission.SEND_SMS) == PackageManager.PERMISSION_GRANTED) {
+                            initiateOfflineMode();
+                        } else {
+                            ActivityCompat.requestPermissions(MainActivity.this,
+                                    new String[] {Manifest.permission.SEND_SMS},PERMISSION_SEND_SMS_ACT);
+                        }
+
                         return true; // if you want to handle the touch event
                     case MotionEvent.ACTION_UP:
                         updateOffline.setBackground(getDrawable(R.drawable.expanded_button));
@@ -393,6 +402,17 @@ public class MainActivity extends AppCompatActivity
         if(!n.isNotificationPolicyAccessGranted()) {
             startDNDPermissionActivity();
         }
+    }
+
+    private void initiateOfflineMode() {
+        // send sms
+        SmsManager smsManager = SmsManager.getDefault();
+        smsManager.sendTextMessage(prevKey,null,MESSAGE_BODY,
+                null, null);
+
+        // register broadcast receiver
+        smsReceiver = new LocationSMSReceiver();
+        registerReceiver(smsReceiver, new IntentFilter("android.provider.Telephony.SMS_RECEIVED"));
     }
 
     private void prepareMenuData() {
@@ -650,10 +670,9 @@ public class MainActivity extends AppCompatActivity
                 return;
             }
             case PERMISSION_SEND_SMS_ACT: {
-                // TODO: handle the offline mode
-                // send sms to the prevkey to request location via SMS
-                SmsManager smsManager = SmsManager.getDefault();
-                smsManager.sendTextMessage(user, null, "Hello!!", null, null);
+                if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+                    initiateOfflineMode();
+                } // else do nothing
                 return;
             }
         }

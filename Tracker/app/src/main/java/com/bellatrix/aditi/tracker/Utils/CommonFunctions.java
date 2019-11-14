@@ -11,6 +11,8 @@ import java.util.Date;
 
 public class CommonFunctions {
 
+    public static final String MESSAGE_BODY = "Please send your location. Sent by Tracker!";
+
     public static long getTimeDifference(Date date) {
 
         Date currenTime = Calendar.getInstance().getTime();
