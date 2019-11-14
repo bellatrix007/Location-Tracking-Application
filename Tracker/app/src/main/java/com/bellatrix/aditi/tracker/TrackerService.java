@@ -39,11 +39,12 @@ import com.google.firebase.database.ValueEventListener;
 import java.util.ArrayList;
 import java.util.List;
 
+import static com.bellatrix.aditi.tracker.Utils.CommonFunctions.MESSAGE_BODY;
+
 // TODO: explore how to persist service is app is killed
 public class TrackerService extends Service {
 
     private static final String TAG = TrackerService.class.getSimpleName();
-    private static final String MESSAGE_BODY = "Please send your location. Sent by Tracker!";
 
     private String user;
     private DatabaseReference ref1, ref2;
