@@ -142,7 +142,7 @@
                     android:layout_width="64dp"
                     android:layout_height="64dp"
                     android:background="@drawable/circle"
-                    android:src="@drawable/ic_message_black"
+                    android:src="@drawable/ic_message_white"
                     android:layout_marginStart="10dp"
                     android:layout_marginTop="20dp"
                     android:layout_marginBottom="20dp"
