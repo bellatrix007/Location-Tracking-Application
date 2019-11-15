@@ -281,8 +281,8 @@ public class MainActivity extends AppCompatActivity
         final TextView distanceHead = (TextView) findViewById(R.id.distanceHead);
         final TextView distanceText = (TextView) findViewById(R.id.distanceText);
         ViewGroup.LayoutParams layoutParams = distance.getLayoutParams();
-        layoutParams.height = 150;
-        layoutParams.width = 150;
+//        layoutParams.height = 150;
+//        layoutParams.width = 150;
         distance.setLayoutParams(layoutParams);
         distance.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -290,7 +290,7 @@ public class MainActivity extends AppCompatActivity
                 if(distance_expanded)
                 {
                     ViewGroup.LayoutParams layoutParams = distance.getLayoutParams();
-                    layoutParams.width = 150;
+//                    layoutParams.width = 300;
                     distance.setLayoutParams(layoutParams);
                     distance_expanded = false;
                     distanceHead.setVisibility(View.VISIBLE);
@@ -299,7 +299,7 @@ public class MainActivity extends AppCompatActivity
                 else
                 {
                     ViewGroup.LayoutParams layoutParams = distance.getLayoutParams();
-                    layoutParams.width = 300;
+//                    layoutParams.width = 300;
                     distance.setLayoutParams(layoutParams);
                     distance_expanded = true;
                     distance.setBackground(ContextCompat.getDrawable(MainActivity.this, R.drawable.expanded_button));
@@ -313,8 +313,8 @@ public class MainActivity extends AppCompatActivity
         final TextView timeHead = (TextView) findViewById(R.id.timeHead);
         final TextView timeText = (TextView) findViewById(R.id.timeText);
         ViewGroup.LayoutParams timelayoutParams = time.getLayoutParams();
-        timelayoutParams.height = 150;
-        timelayoutParams.width = 150;
+//        timelayoutParams.height = 150;
+//        timelayoutParams.width = 150;
         time.setLayoutParams(timelayoutParams);
         time.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -322,7 +322,7 @@ public class MainActivity extends AppCompatActivity
                 if(time_expanded)
                 {
                     ViewGroup.LayoutParams layoutParams = time.getLayoutParams();
-                    layoutParams.width = 150;
+//                    layoutParams.width = 150;
                     time.setLayoutParams(layoutParams);
                     time_expanded = false;
                     timeHead.setVisibility(View.VISIBLE);
@@ -331,7 +331,7 @@ public class MainActivity extends AppCompatActivity
                 else
                 {
                     ViewGroup.LayoutParams layoutParams = time.getLayoutParams();
-                    layoutParams.width = 300;
+//                    layoutParams.width = 300;
                     time.setLayoutParams(layoutParams);
                     time_expanded = true;
                     time.setBackground(ContextCompat.getDrawable(MainActivity.this, R.drawable.expanded_button));
