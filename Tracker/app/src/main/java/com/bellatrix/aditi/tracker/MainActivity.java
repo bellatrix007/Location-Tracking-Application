@@ -769,7 +769,7 @@ public class MainActivity extends AppCompatActivity
 
     private void startDNDPermissionActivity() {
         AlertDialog.Builder alertDialogBuilder = new AlertDialog.Builder(this);
-        alertDialogBuilder.setMessage("Tracker requires permission to change the DND mode of the device. Proceed?");
+        alertDialogBuilder.setMessage("Tracker requires permission to control ringer volume. Proceed?");
 
         alertDialogBuilder.setPositiveButton("Yes",
                 new DialogInterface.OnClickListener() {
