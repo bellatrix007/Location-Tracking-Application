@@ -3,6 +3,7 @@ package com.bellatrix.trackerb;
 import android.Manifest;
 import android.app.ActivityManager;
 import android.content.Context;
+import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
@@ -54,17 +55,19 @@ import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.widget.Toolbar;
 
 import android.view.Menu;
+import android.widget.TextView;
 import android.widget.Toast;
 
 import static com.bellatrix.trackerb.Utils.CommonFunctions.getUrl;
 
 public class DeliveryActivity extends AppCompatActivity
-        implements NavigationView.OnNavigationItemSelectedListener, OnMapReadyCallback, TaskLoadedCallback {
+        implements NavigationView.OnNavigationItemSelectedListener, OnMapReadyCallback,
+        TaskLoadedCallback, DialogInterface.OnDismissListener {
 
     private static final int PERMISSION_LOCATION = 1234;
     private static final int REQUEST_PHONE_CALL = 1235;
 
-    private String user;
+    private String user, user_name;
     private boolean isIdle;
     private Intent trackerServiceIntent;
 
@@ -97,6 +100,38 @@ public class DeliveryActivity extends AppCompatActivity
 
         firebaseDatabase = FirebaseDatabase.getInstance();
         databaseReference = firebaseDatabase.getReference();
+
+        NavigationView navigationView = (NavigationView) findViewById(R.id.nav_view);
+        final View headerLayout = navigationView.getHeaderView(0);
+        navigationView.setNavigationItemSelectedListener(this);
+
+        // check for new user
+        databaseReference.child("delivery").child(user).addValueEventListener(new ValueEventListener() {
+            @Override
+            public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
+                if(!dataSnapshot.exists()) {
+                    // show undismissable alert dialog to enter name
+                    // pop up register user dialog
+                    RegisterUserDialogFragment registerUserDialogFragment =
+                            RegisterUserDialogFragment.newInstance("delivery", user);
+                    registerUserDialogFragment.setCancelable(false);
+                    registerUserDialogFragment.show(getSupportFragmentManager(),"registerUser");
+                } else {
+                    // fetch name and set in shared preferences
+                    user_name = dataSnapshot.child("name").getValue().toString();
+                    getSharedPreferences("login", MODE_PRIVATE).edit()
+                            .putString("user_name", user_name).apply();
+
+                    ((TextView)headerLayout.findViewById(R.id.tv_h1)).setText(user_name);
+                    ((TextView)headerLayout.findViewById(R.id.tv_h2)).setText(user);
+                }
+            }
+
+            @Override
+            public void onCancelled(@NonNull DatabaseError databaseError) {
+
+            }
+        });
 
         nomapLayout = findViewById(R.id.ll_nomap);
         call = findViewById(R.id.fab_call);
@@ -205,7 +240,6 @@ public class DeliveryActivity extends AppCompatActivity
                 this, drawer, toolbar, R.string.navigation_drawer_open, R.string.navigation_drawer_close);
         drawer.addDrawerListener(toggle);
         toggle.syncState();
-        NavigationView navigationView = findViewById(R.id.nav_view);
         // Passing each menu ID as a set of Ids because each
         // menu should be considered as top level destinations.
         mAppBarConfiguration = new AppBarConfiguration.Builder(
@@ -447,5 +481,12 @@ public class DeliveryActivity extends AppCompatActivity
         if (mPolyline != null)
             mPolyline.remove();
         mPolyline = mMap.addPolyline((PolylineOptions) values[0]);
+    }
+
+    @Override
+    public void onDismiss(DialogInterface dialogInterface) {
+        user_name = getSharedPreferences("login", MODE_PRIVATE).getString("user_name", "");
+        ((TextView)findViewById(R.id.tv_h1)).setText(user_name);
+        ((TextView)findViewById(R.id.tv_h2)).setText(user);
     }
 }

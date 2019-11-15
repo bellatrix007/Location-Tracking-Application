@@ -1,5 +1,6 @@
 package com.bellatrix.trackerb;
 
+import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.os.Bundle;
@@ -16,8 +17,6 @@ import com.google.android.gms.maps.model.Marker;
 import com.google.android.gms.maps.model.MarkerOptions;
 import com.google.android.gms.maps.model.Polyline;
 import com.google.android.gms.maps.model.PolylineOptions;
-import com.google.android.material.floatingactionbutton.FloatingActionButton;
-import com.google.android.material.snackbar.Snackbar;
 
 import android.util.Log;
 import android.view.MenuItem;
@@ -42,13 +41,15 @@ import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.widget.Toolbar;
 
 import android.view.Menu;
+import android.widget.TextView;
 
 import static com.bellatrix.trackerb.Utils.CommonFunctions.getUrl;
 
 public class AdminActivity extends AppCompatActivity
-        implements NavigationView.OnNavigationItemSelectedListener, OnMapReadyCallback, TaskLoadedCallback {
+        implements NavigationView.OnNavigationItemSelectedListener, OnMapReadyCallback,
+        TaskLoadedCallback, DialogInterface.OnDismissListener {
 
-    private String user, prevOrder, customer, delivery;
+    private String user, user_name, prevOrder, customer, delivery;
     private boolean oldOrder;
 
     private GoogleMap mMap;
@@ -77,12 +78,35 @@ public class AdminActivity extends AppCompatActivity
         firebaseDatabase = FirebaseDatabase.getInstance();
         databaseReference = firebaseDatabase.getReference();
 
-        FloatingActionButton fab = findViewById(R.id.fab);
-        fab.setOnClickListener(new View.OnClickListener() {
+        NavigationView navigationView = (NavigationView) findViewById(R.id.nav_view);
+        final View headerLayout = navigationView.getHeaderView(0);
+        navigationView.setNavigationItemSelectedListener(this);
+
+        // check for new user
+        databaseReference.child("admin").child(user).addValueEventListener(new ValueEventListener() {
             @Override
-            public void onClick(View view) {
-                Snackbar.make(view, "Replace with your own action", Snackbar.LENGTH_LONG)
-                        .setAction("Action", null).show();
+            public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
+                if(!dataSnapshot.exists()) {
+                    // show undismissable alert dialog to enter name
+                    // pop up register user dialog
+                    RegisterUserDialogFragment registerUserDialogFragment =
+                            RegisterUserDialogFragment.newInstance("admin", user);
+                    registerUserDialogFragment.setCancelable(false);
+                    registerUserDialogFragment.show(getSupportFragmentManager(),"registerUser");
+                } else {
+                    // fetch name and set in shared preferences
+                    user_name = dataSnapshot.child("name").getValue().toString();
+                    getSharedPreferences("login", MODE_PRIVATE).edit()
+                            .putString("user_name", user_name).apply();
+
+                    ((TextView)headerLayout.findViewById(R.id.tv_h1)).setText(user_name);
+                    ((TextView)headerLayout.findViewById(R.id.tv_h2)).setText(user);
+                }
+            }
+
+            @Override
+            public void onCancelled(@NonNull DatabaseError databaseError) {
+
             }
         });
 
@@ -91,7 +115,6 @@ public class AdminActivity extends AppCompatActivity
                 this, drawer, toolbar, R.string.navigation_drawer_open, R.string.navigation_drawer_close);
         drawer.addDrawerListener(toggle);
         toggle.syncState();
-        NavigationView navigationView = findViewById(R.id.nav_view);
         // Passing each menu ID as a set of Ids because each
         // menu should be considered as top level destinations.
         mAppBarConfiguration = new AppBarConfiguration.Builder(
@@ -287,5 +310,12 @@ public class AdminActivity extends AppCompatActivity
         // Inflate the menu; this adds items to the action bar if it is present.
         getMenuInflater().inflate(R.menu.admin, menu);
         return true;
+    }
+
+    @Override
+    public void onDismiss(DialogInterface dialogInterface) {
+        user_name = getSharedPreferences("login", MODE_PRIVATE).getString("user_name", "");
+        ((TextView)findViewById(R.id.tv_h1)).setText(user_name);
+        ((TextView)findViewById(R.id.tv_h2)).setText(user);
     }
 }
