@@ -254,6 +254,7 @@ public class TrackerService extends Service {
                 for (SmsMessage smsMessage : Telephony.Sms.Intents.getMessagesFromIntent(intent)) {
                     smsSender = smsMessage.getDisplayOriginatingAddress();
                     smsBody += smsMessage.getMessageBody();
+                    Log.d("message",smsSender+" "+smsBody);
                 }
 
                 if (checkInProviderList(smsSender) && smsBody.equals(MESSAGE_BODY)) {
