@@ -137,14 +137,14 @@ public class DeliveryActivity extends AppCompatActivity
         call = findViewById(R.id.fab_call);
         delivered = findViewById(R.id.fab_delivered);
 
-        databaseReference.child("delivery").child(user).addValueEventListener(new ValueEventListener() {
+        databaseReference.child("delivery").child(user).child("idle").addValueEventListener(new ValueEventListener() {
             @Override
             public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
 
-                if(dataSnapshot.child("idle").getValue()==null)
+                if(dataSnapshot.getValue()==null)
                     return;
 
-                if(dataSnapshot.child("idle").getValue().toString().equals("true"))
+                if(dataSnapshot.getValue().toString().equals("true"))
                 {
                     isIdle = true;
                     nomapLayout.setVisibility(View.VISIBLE);
@@ -170,26 +170,39 @@ public class DeliveryActivity extends AppCompatActivity
                     nomapLayout.setVisibility(View.GONE);
                     call.show();
                     delivered.show();
-
-                    // set update for customer location
-                    order = dataSnapshot.child("order").getValue().toString();
-
-                    // get customer id from order
-                    customerListener = databaseReference.child("order").child(order)
-                            .child("customer").addValueEventListener(new ValueEventListener() {
-                        @Override
-                        public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
-                            customer = dataSnapshot.getValue().toString();
-                            setUpdates(customer);
-
-                        }
-
-                        @Override
-                        public void onCancelled(@NonNull DatabaseError databaseError) {
-
-                        }
-                    });
                 }
+            }
+
+            @Override
+            public void onCancelled(@NonNull DatabaseError databaseError) {
+
+            }
+        });
+
+        databaseReference.child("delivery").child(user).child("order").addValueEventListener(new ValueEventListener() {
+            @Override
+            public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
+                if(dataSnapshot.getValue()==null)
+                    return;
+
+                // set update for customer location
+                order = dataSnapshot.getValue().toString();
+
+                // get customer id from order
+                customerListener = databaseReference.child("order").child(order)
+                        .child("customer").addValueEventListener(new ValueEventListener() {
+                    @Override
+                    public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
+                        customer = dataSnapshot.getValue().toString();
+                        setUpdates(customer);
+
+                    }
+
+                    @Override
+                    public void onCancelled(@NonNull DatabaseError databaseError) {
+
+                    }
+                });
             }
 
             @Override
