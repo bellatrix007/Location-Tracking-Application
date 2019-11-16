@@ -75,6 +75,7 @@ public class RegisterUserDialogFragment  extends DialogFragment {
 
                         user_name = et_user_name.getText().toString();
                         databaseReference.child(userType).child(user).child("name").setValue(user_name);
+                        databaseReference.child(userType).child(user).child("idle").setValue("true");
 
                         // add user name to shared preferences
                         if(getActivity()!=null && isAdded())

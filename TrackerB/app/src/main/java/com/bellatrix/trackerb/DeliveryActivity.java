@@ -140,6 +140,10 @@ public class DeliveryActivity extends AppCompatActivity
         databaseReference.child("delivery").child(user).addValueEventListener(new ValueEventListener() {
             @Override
             public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
+
+                if(dataSnapshot.child("idle").getValue()==null)
+                    return;
+
                 if(dataSnapshot.child("idle").getValue().toString().equals("true"))
                 {
                     isIdle = true;
