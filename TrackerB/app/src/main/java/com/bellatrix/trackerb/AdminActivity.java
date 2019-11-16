@@ -129,11 +129,11 @@ public class AdminActivity extends AppCompatActivity
         databaseReference.child("admin").child(user).child("order").addValueEventListener(new ValueEventListener() {
             @Override
             public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
-                    viewOrders.clear();
+                viewOrders.clear();
 
-                    for(DataSnapshot ds: dataSnapshot.getChildren()) {
-                        viewOrders.add(ds.getKey() + ": " + ds.getValue());
-                    }
+                for(DataSnapshot ds: dataSnapshot.getChildren()) {
+                    viewOrders.add(ds.getKey() + ": " + ds.getValue());
+                }
             }
 
             @Override

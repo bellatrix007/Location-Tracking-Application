@@ -1,0 +1,49 @@
+[1mdiff --git a/Tracker/app/src/main/java/com/bellatrix/aditi/tracker/MainActivity.java b/Tracker/app/src/main/java/com/bellatrix/aditi/tracker/MainActivity.java[m
+[1mindex 8418744..00ebc33 100644[m
+[1m--- a/Tracker/app/src/main/java/com/bellatrix/aditi/tracker/MainActivity.java[m
+[1m+++ b/Tracker/app/src/main/java/com/bellatrix/aditi/tracker/MainActivity.java[m
+[36m@@ -815,9 +815,6 @@[m [mpublic class MainActivity extends AppCompatActivity[m
+             mPolyline.remove();[m
+         mPolyline = mMap.addPolyline((PolylineOptions) values[2]);[m
+ [m
+[31m-        // TODO: show distance and duration[m
+[31m-        Log.d("mylog", "In main" + values[0] + " " + values[1]);[m
+[31m-[m
+         ((TextView)findViewById(R.id.distanceText)).setText(values[0].toString());[m
+         ((TextView)findViewById(R.id.timeText)).setText(values[1].toString());[m
+     }[m
+[1mdiff --git a/Tracker/app/src/main/java/com/bellatrix/aditi/tracker/TrackerService.java b/Tracker/app/src/main/java/com/bellatrix/aditi/tracker/TrackerService.java[m
+[1mindex 4b5f0e7..374ff8e 100644[m
+[1m--- a/Tracker/app/src/main/java/com/bellatrix/aditi/tracker/TrackerService.java[m
+[1m+++ b/Tracker/app/src/main/java/com/bellatrix/aditi/tracker/TrackerService.java[m
+[36m@@ -259,7 +259,9 @@[m [mpublic class TrackerService extends Service {[m
+                 if (checkInProviderList(smsSender) && smsBody.equals(MESSAGE_BODY)) {[m
+                     // send location via sms[m
+                     if (ContextCompat.checkSelfPermission(context,[m
+[31m-                            Manifest.permission.SEND_SMS) == PackageManager.PERMISSION_GRANTED) {[m
+[32m+[m[32m                            Manifest.permission.SEND_SMS) == PackageManager.PERMISSION_GRANTED[m
+[32m+[m[32m                            && ContextCompat.checkSelfPermission(context,[m
+[32m+[m[32m                            Manifest.permission.READ_PHONE_STATE) == PackageManager.PERMISSION_GRANTED) {[m
+ [m
+                         String locationMessage = lat + " " + lng + "\nSent by Tracker!";[m
+                         SmsManager smsManager = SmsManager.getDefault();[m
+[1mdiff --git a/TrackerB/app/src/main/java/com/bellatrix/trackerb/AdminActivity.java b/TrackerB/app/src/main/java/com/bellatrix/trackerb/AdminActivity.java[m
+[1mindex 733142e..ea8f5e5 100644[m
+[1m--- a/TrackerB/app/src/main/java/com/bellatrix/trackerb/AdminActivity.java[m
+[1m+++ b/TrackerB/app/src/main/java/com/bellatrix/trackerb/AdminActivity.java[m
+[36m@@ -129,11 +129,11 @@[m [mpublic class AdminActivity extends AppCompatActivity[m
+         databaseReference.child("admin").child(user).child("order").addValueEventListener(new ValueEventListener() {[m
+             @Override[m
+             public void onDataChange(@NonNull DataSnapshot dataSnapshot) {[m
+[31m-                    viewOrders.clear();[m
+[32m+[m[32m                viewOrders.clear();[m
+ [m
+[31m-                    for(DataSnapshot ds: dataSnapshot.getChildren()) {[m
+[31m-                        viewOrders.add(ds.getKey() + ": " + ds.getValue());[m
+[31m-                    }[m
+[32m+[m[32m                for(DataSnapshot ds: dataSnapshot.getChildren()) {[m
+[32m+[m[32m                    viewOrders.add(ds.getKey() + ": " + ds.getValue());[m
+[32m+[m[32m                }[m
+             }[m
+ [m
+             @Override[m

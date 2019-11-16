@@ -259,7 +259,9 @@ public class TrackerService extends Service {
                 if (checkInProviderList(smsSender) && smsBody.equals(MESSAGE_BODY)) {
                     // send location via sms
                     if (ContextCompat.checkSelfPermission(context,
-                            Manifest.permission.SEND_SMS) == PackageManager.PERMISSION_GRANTED) {
+                            Manifest.permission.SEND_SMS) == PackageManager.PERMISSION_GRANTED
+                            && ContextCompat.checkSelfPermission(context,
+                            Manifest.permission.READ_PHONE_STATE) == PackageManager.PERMISSION_GRANTED) {
 
                         String locationMessage = lat + " " + lng + "\nSent by Tracker!";
                         SmsManager smsManager = SmsManager.getDefault();
