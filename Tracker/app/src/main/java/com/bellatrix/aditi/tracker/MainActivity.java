@@ -231,11 +231,15 @@ public class MainActivity extends AppCompatActivity
                         updateOffline.setBackground(getDrawable(R.drawable.expanded_button_clicked));
 
                         if (ContextCompat.checkSelfPermission(MainActivity.this,
-                                Manifest.permission.SEND_SMS) == PackageManager.PERMISSION_GRANTED) {
+                                Manifest.permission.SEND_SMS) == PackageManager.PERMISSION_GRANTED
+                        && ContextCompat.checkSelfPermission(MainActivity.this,
+                                Manifest.permission.READ_PHONE_STATE) == PackageManager.PERMISSION_GRANTED) {
                             initiateOfflineMode();
                         } else {
-                            ActivityCompat.requestPermissions(MainActivity.this,
-                                    new String[] {Manifest.permission.SEND_SMS},PERMISSION_SEND_SMS_ACT);
+                            ActivityCompat.requestPermissions
+                                (MainActivity.this, new String[] {Manifest.permission.SEND_SMS,
+                                        Manifest.permission.RECEIVE_SMS, Manifest.permission.READ_SMS,
+                                        Manifest.permission.READ_PHONE_STATE}, PERMISSION_SEND_SMS_ACT);
                         }
 
                         return true; // if you want to handle the touch event
@@ -387,11 +391,14 @@ public class MainActivity extends AppCompatActivity
 
         // send sms
         if (ContextCompat.checkSelfPermission(this,
-                Manifest.permission.SEND_SMS) != PackageManager.PERMISSION_GRANTED) {
+                Manifest.permission.SEND_SMS) != PackageManager.PERMISSION_GRANTED
+        || ContextCompat.checkSelfPermission(this,
+                Manifest.permission.READ_PHONE_STATE) != PackageManager.PERMISSION_GRANTED) {
             ActivityCompat.requestPermissions
-                    (this, new String[] {Manifest.permission.SEND_SMS},PERMISSION_SEND_SMS);
+                    (this, new String[] {Manifest.permission.SEND_SMS,
+                            Manifest.permission.RECEIVE_SMS, Manifest.permission.READ_SMS,
+                            Manifest.permission.READ_PHONE_STATE}, PERMISSION_SEND_SMS);
         } else {
-            // DND permission
             checkAndRequestDNDAccess();
         }
     }
@@ -837,7 +844,6 @@ public class MainActivity extends AppCompatActivity
     }
 
     private class LocationSMSReceiver extends BroadcastReceiver {
-
         @Override
         public void onReceive(Context context, Intent intent) {
             if (intent.getAction().equals(Telephony.Sms.Intents.SMS_RECEIVED_ACTION)) {
