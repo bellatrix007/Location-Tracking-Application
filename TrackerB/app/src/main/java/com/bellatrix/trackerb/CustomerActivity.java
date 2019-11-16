@@ -54,6 +54,8 @@ import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.widget.Toolbar;
 
 import android.view.Menu;
+import android.view.ViewGroup;
+import android.widget.LinearLayout;
 import android.widget.TextView;
 
 import static com.bellatrix.trackerb.Utils.CommonFunctions.getUrl;
@@ -67,6 +69,7 @@ public class CustomerActivity extends AppCompatActivity
 
     private String user, user_name, prevOrder;
     private Intent trackerServiceIntent;
+    private boolean distance_expanded,time_expanded;
 
     private FirebaseDatabase firebaseDatabase;
     private DatabaseReference databaseReference;
@@ -144,6 +147,74 @@ public class CustomerActivity extends AppCompatActivity
 
         askPermission();
 
+        distance_expanded = false;
+        time_expanded = false;
+
+        final LinearLayout distance = (LinearLayout) findViewById(R.id.distanceLayout);
+        final TextView distanceHead = (TextView) findViewById(R.id.distanceHead);
+        final TextView distanceText = (TextView) findViewById(R.id.distanceText);
+        ViewGroup.LayoutParams layoutParams = distance.getLayoutParams();
+//        layoutParams.height = 150;
+//        layoutParams.width = 150;
+        distance.setLayoutParams(layoutParams);
+        distance.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                if(distance_expanded)
+                {
+                    ViewGroup.LayoutParams layoutParams = distance.getLayoutParams();
+//                    layoutParams.width = 300;
+                    distance.setLayoutParams(layoutParams);
+                    distance_expanded = false;
+                    distanceHead.setVisibility(View.VISIBLE);
+                    distanceText.setVisibility(View.GONE);
+                }
+                else
+                {
+                    ViewGroup.LayoutParams layoutParams = distance.getLayoutParams();
+//                    layoutParams.width = 300;
+                    distance.setLayoutParams(layoutParams);
+                    distance_expanded = true;
+                    distance.setBackground(ContextCompat.getDrawable(CustomerActivity.this, R.drawable.expanded_button));
+                    distanceHead.setVisibility(View.GONE);
+                    distanceText.setVisibility(View.VISIBLE);
+                }
+            }
+        });
+
+        final LinearLayout time = (LinearLayout) findViewById(R.id.timeLayout);
+        final TextView timeHead = (TextView) findViewById(R.id.timeHead);
+        final TextView timeText = (TextView) findViewById(R.id.timeText);
+        ViewGroup.LayoutParams timelayoutParams = time.getLayoutParams();
+//        timelayoutParams.height = 150;
+//        timelayoutParams.width = 150;
+        time.setLayoutParams(timelayoutParams);
+        time.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                if(time_expanded)
+                {
+                    ViewGroup.LayoutParams layoutParams = time.getLayoutParams();
+//                    layoutParams.width = 150;
+                    time.setLayoutParams(layoutParams);
+                    time_expanded = false;
+                    timeHead.setVisibility(View.VISIBLE);
+                    timeText.setVisibility(View.GONE);
+                }
+                else
+                {
+                    ViewGroup.LayoutParams layoutParams = time.getLayoutParams();
+//                    layoutParams.width = 300;
+                    time.setLayoutParams(layoutParams);
+                    time_expanded = true;
+                    time.setBackground(ContextCompat.getDrawable(CustomerActivity.this, R.drawable.expanded_button));
+                    timeHead.setVisibility(View.GONE);
+                    timeText.setVisibility(View.VISIBLE);
+                }
+            }
+        });
+
+
         DrawerLayout drawer = findViewById(R.id.drawer_layout);
         ActionBarDrawerToggle toggle = new ActionBarDrawerToggle(
                 this, drawer, toolbar, R.string.navigation_drawer_open, R.string.navigation_drawer_close);
@@ -191,6 +262,8 @@ public class CustomerActivity extends AppCompatActivity
                 delLoc = null;
                 String title = menuItem.getTitle().toString();
                 String id = title.substring(0, title.indexOf(":"));
+                ((LinearLayout)findViewById(R.id.distanceLayout)).setVisibility(View.VISIBLE);
+                ((LinearLayout)findViewById(R.id.timeLayout)).setVisibility(View.VISIBLE);
                 setUpdates(id);
         }
 
@@ -420,7 +493,9 @@ public class CustomerActivity extends AppCompatActivity
     public void onTaskDone(Object... values) {
         if (mPolyline != null)
             mPolyline.remove();
-        mPolyline = mMap.addPolyline((PolylineOptions) values[0]);
+        mPolyline = mMap.addPolyline((PolylineOptions) values[2]);
+        ((TextView)findViewById(R.id.distanceText)).setText(values[0].toString());
+        ((TextView)findViewById(R.id.timeText)).setText(values[1].toString());
     }
 
     // if we do not stop it, the service will die with our app.

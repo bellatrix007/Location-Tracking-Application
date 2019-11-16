@@ -55,6 +55,8 @@ import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.widget.Toolbar;
 
 import android.view.Menu;
+import android.view.ViewGroup;
+import android.widget.LinearLayout;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -70,6 +72,8 @@ public class DeliveryActivity extends AppCompatActivity
     private String user, user_name;
     private boolean isIdle;
     private Intent trackerServiceIntent;
+    private Boolean distance_expanded;
+    private Boolean time_expanded;
 
     private FirebaseDatabase firebaseDatabase;
     private DatabaseReference databaseReference;
@@ -163,6 +167,7 @@ public class DeliveryActivity extends AppCompatActivity
                     if(markerListener!=null)
                         databaseReference.child("location").child(customer).removeEventListener(markerListener);
                     updateCameraBounds();
+
                 }
                 else {
                     isIdle = false;
@@ -238,6 +243,74 @@ public class DeliveryActivity extends AppCompatActivity
 
 
         askPermission();
+
+        distance_expanded = false;
+        time_expanded = false;
+
+        final LinearLayout distance = (LinearLayout) findViewById(R.id.distanceLayout);
+        final TextView distanceHead = (TextView) findViewById(R.id.distanceHead);
+        final TextView distanceText = (TextView) findViewById(R.id.distanceText);
+        ViewGroup.LayoutParams layoutParams = distance.getLayoutParams();
+//        layoutParams.height = 150;
+//        layoutParams.width = 150;
+        distance.setLayoutParams(layoutParams);
+        distance.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                if(distance_expanded)
+                {
+                    ViewGroup.LayoutParams layoutParams = distance.getLayoutParams();
+//                    layoutParams.width = 300;
+                    distance.setLayoutParams(layoutParams);
+                    distance_expanded = false;
+                    distanceHead.setVisibility(View.VISIBLE);
+                    distanceText.setVisibility(View.GONE);
+                }
+                else
+                {
+                    ViewGroup.LayoutParams layoutParams = distance.getLayoutParams();
+//                    layoutParams.width = 300;
+                    distance.setLayoutParams(layoutParams);
+                    distance_expanded = true;
+                    distance.setBackground(ContextCompat.getDrawable(DeliveryActivity.this, R.drawable.expanded_button));
+                    distanceHead.setVisibility(View.GONE);
+                    distanceText.setVisibility(View.VISIBLE);
+                }
+            }
+        });
+
+        final LinearLayout time = (LinearLayout) findViewById(R.id.timeLayout);
+        final TextView timeHead = (TextView) findViewById(R.id.timeHead);
+        final TextView timeText = (TextView) findViewById(R.id.timeText);
+        ViewGroup.LayoutParams timelayoutParams = time.getLayoutParams();
+//        timelayoutParams.height = 150;
+//        timelayoutParams.width = 150;
+        time.setLayoutParams(timelayoutParams);
+        time.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                if(time_expanded)
+                {
+                    ViewGroup.LayoutParams layoutParams = time.getLayoutParams();
+//                    layoutParams.width = 150;
+                    time.setLayoutParams(layoutParams);
+                    time_expanded = false;
+                    timeHead.setVisibility(View.VISIBLE);
+                    timeText.setVisibility(View.GONE);
+                }
+                else
+                {
+                    ViewGroup.LayoutParams layoutParams = time.getLayoutParams();
+//                    layoutParams.width = 300;
+                    time.setLayoutParams(layoutParams);
+                    time_expanded = true;
+                    time.setBackground(ContextCompat.getDrawable(DeliveryActivity.this, R.drawable.expanded_button));
+                    timeHead.setVisibility(View.GONE);
+                    timeText.setVisibility(View.VISIBLE);
+                }
+            }
+        });
+
 
         DrawerLayout drawer = findViewById(R.id.drawer_layout);
         ActionBarDrawerToggle toggle = new ActionBarDrawerToggle(
@@ -484,7 +557,9 @@ public class DeliveryActivity extends AppCompatActivity
     public void onTaskDone(Object... values) {
         if (mPolyline != null)
             mPolyline.remove();
-        mPolyline = mMap.addPolyline((PolylineOptions) values[0]);
+        mPolyline = mMap.addPolyline((PolylineOptions) values[2]);
+        ((TextView)findViewById(R.id.distanceText)).setText(values[0].toString());
+        ((TextView)findViewById(R.id.timeText)).setText(values[1].toString());
     }
 
     @Override

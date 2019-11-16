@@ -25,6 +25,7 @@ import android.view.View;
 
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.ActionBarDrawerToggle;
+import androidx.core.content.ContextCompat;
 import androidx.core.view.GravityCompat;
 import androidx.navigation.ui.AppBarConfiguration;
 
@@ -41,6 +42,8 @@ import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.widget.Toolbar;
 
 import android.view.Menu;
+import android.view.ViewGroup;
+import android.widget.LinearLayout;
 import android.widget.TextView;
 
 import static com.bellatrix.trackerb.Utils.CommonFunctions.getUrl;
@@ -50,7 +53,7 @@ public class AdminActivity extends AppCompatActivity
         TaskLoadedCallback, DialogInterface.OnDismissListener {
 
     private String user, user_name, prevOrder, customer, delivery;
-    private boolean oldOrder;
+    private boolean oldOrder,distance_expanded,time_expanded;
 
     private GoogleMap mMap;
     private LatLng custLoc, delLoc;
@@ -142,6 +145,74 @@ public class AdminActivity extends AppCompatActivity
             }
         });
 
+        distance_expanded = false;
+        time_expanded = false;
+
+        final LinearLayout distance = (LinearLayout) findViewById(R.id.distanceLayout);
+        final TextView distanceHead = (TextView) findViewById(R.id.distanceHead);
+        final TextView distanceText = (TextView) findViewById(R.id.distanceText);
+        ViewGroup.LayoutParams layoutParams = distance.getLayoutParams();
+//        layoutParams.height = 150;
+//        layoutParams.width = 150;
+        distance.setLayoutParams(layoutParams);
+        distance.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                if(distance_expanded)
+                {
+                    ViewGroup.LayoutParams layoutParams = distance.getLayoutParams();
+//                    layoutParams.width = 300;
+                    distance.setLayoutParams(layoutParams);
+                    distance_expanded = false;
+                    distanceHead.setVisibility(View.VISIBLE);
+                    distanceText.setVisibility(View.GONE);
+                }
+                else
+                {
+                    ViewGroup.LayoutParams layoutParams = distance.getLayoutParams();
+//                    layoutParams.width = 300;
+                    distance.setLayoutParams(layoutParams);
+                    distance_expanded = true;
+                    distance.setBackground(ContextCompat.getDrawable(AdminActivity.this, R.drawable.expanded_button));
+                    distanceHead.setVisibility(View.GONE);
+                    distanceText.setVisibility(View.VISIBLE);
+                }
+            }
+        });
+
+        final LinearLayout time = (LinearLayout) findViewById(R.id.timeLayout);
+        final TextView timeHead = (TextView) findViewById(R.id.timeHead);
+        final TextView timeText = (TextView) findViewById(R.id.timeText);
+        ViewGroup.LayoutParams timelayoutParams = time.getLayoutParams();
+//        timelayoutParams.height = 150;
+//        timelayoutParams.width = 150;
+        time.setLayoutParams(timelayoutParams);
+        time.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                if(time_expanded)
+                {
+                    ViewGroup.LayoutParams layoutParams = time.getLayoutParams();
+//                    layoutParams.width = 150;
+                    time.setLayoutParams(layoutParams);
+                    time_expanded = false;
+                    timeHead.setVisibility(View.VISIBLE);
+                    timeText.setVisibility(View.GONE);
+                }
+                else
+                {
+                    ViewGroup.LayoutParams layoutParams = time.getLayoutParams();
+//                    layoutParams.width = 300;
+                    time.setLayoutParams(layoutParams);
+                    time_expanded = true;
+                    time.setBackground(ContextCompat.getDrawable(AdminActivity.this, R.drawable.expanded_button));
+                    timeHead.setVisibility(View.GONE);
+                    timeText.setVisibility(View.VISIBLE);
+                }
+            }
+        });
+
+
         if(mMap == null) {
             SupportMapFragment mapFragment = (SupportMapFragment) getSupportFragmentManager()
                     .findFragmentById(R.id.map);
@@ -168,7 +239,10 @@ public class AdminActivity extends AppCompatActivity
                 delLoc = null;
                 String title = item.getTitle().toString();
                 String id = title.substring(0, title.indexOf(":"));
+                ((LinearLayout)findViewById(R.id.distanceLayout)).setVisibility(View.VISIBLE);
+                ((LinearLayout)findViewById(R.id.timeLayout)).setVisibility(View.VISIBLE);
                 setUpdates(id);
+
         }
 
         DrawerLayout drawer = (DrawerLayout) findViewById(R.id.drawer_layout);
@@ -302,7 +376,9 @@ public class AdminActivity extends AppCompatActivity
     public void onTaskDone(Object... values) {
         if (mPolyline != null)
             mPolyline.remove();
-        mPolyline = mMap.addPolyline((PolylineOptions) values[0]);
+        mPolyline = mMap.addPolyline((PolylineOptions) values[2]);
+        ((TextView)findViewById(R.id.distanceText)).setText(values[0].toString());
+        ((TextView)findViewById(R.id.timeText)).setText(values[1].toString());
     }
 
     @Override

@@ -5,6 +5,7 @@ import android.graphics.Color;
 import android.os.AsyncTask;
 import android.util.Log;
 
+import com.bellatrix.trackerb.DatabaseClasses.MapTraversal;
 import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.PolylineOptions;
 
@@ -14,7 +15,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 
-public class PointsParser extends AsyncTask<String, Integer, List<List<HashMap<String, String>>>> {
+public class PointsParser extends AsyncTask<String, Integer, MapTraversal> {
 
     TaskLoadedCallback taskCallback;
     String directionMode = "driving";
@@ -26,44 +27,45 @@ public class PointsParser extends AsyncTask<String, Integer, List<List<HashMap<S
 
     // Parsing the data in non-ui thread
     @Override
-    protected List<List<HashMap<String, String>>> doInBackground(String... jsonData) {
+    protected MapTraversal doInBackground(String... jsonData) {
 
         JSONObject jObject;
-        List<List<HashMap<String, String>>> routes = null;
+        MapTraversal mapTraversal = null;
 
         try {
             jObject = new JSONObject(jsonData[0]);
-            Log.d("mylog", jsonData[0].toString());
             DataParser parser = new DataParser();
-            Log.d("mylog", parser.toString());
 
             // Starts parsing data
-            routes = parser.parse(jObject);
+            mapTraversal = parser.parse(jObject);
+            Log.d("mylog", mapTraversal.distance +" "+mapTraversal.duration);
             Log.d("mylog", "Executing routes");
-            Log.d("mylog", routes.toString());
+            Log.d("mylog", mapTraversal.routes.toString());
 
         } catch (Exception e) {
             Log.d("mylog", e.toString());
             e.printStackTrace();
         }
-        return routes;
+        return mapTraversal;
     }
 
     // Executes in UI thread, after the parsing process
     @Override
-    protected void onPostExecute(List<List<HashMap<String, String>>> result) {
+    protected void onPostExecute(MapTraversal result) {
 
-        if(result==null)
+        if(result==null || result.routes==null)
             return;
+
+        List<List<HashMap<String, String>>> routes = result.routes;
 
         ArrayList<LatLng> points;
         PolylineOptions lineOptions = null;
         // Traversing through all the routes
-        for (int i = 0; i < result.size(); i++) {
+        for (int i = 0; i < routes.size(); i++) {
             points = new ArrayList<>();
             lineOptions = new PolylineOptions();
             // Fetching i-th route
-            List<HashMap<String, String>> path = result.get(i);
+            List<HashMap<String, String>> path = routes.get(i);
             // Fetching all the points in i-th route
             for (int j = 0; j < path.size(); j++) {
                 HashMap<String, String> point = path.get(j);
@@ -81,17 +83,15 @@ public class PointsParser extends AsyncTask<String, Integer, List<List<HashMap<S
                 lineOptions.width(5);
                 lineOptions.color(Color.BLUE);
             }
-            Log.d("mylog", "onPostExecute lineoptions decoded");
         }
 
         // Drawing polyline in the Google Map for the i-th route
         if (lineOptions != null) {
             //mMap.addPolyline(lineOptions);
-            taskCallback.onTaskDone(lineOptions);
+            taskCallback.onTaskDone(result.distance, result.duration, lineOptions);
 
         } else {
             Log.d("mylog", "without Polylines drawn");
         }
     }
 }
-

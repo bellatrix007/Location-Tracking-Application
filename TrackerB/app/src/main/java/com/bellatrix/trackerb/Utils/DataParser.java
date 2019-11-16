@@ -1,5 +1,6 @@
 package com.bellatrix.trackerb.Utils;
 
+import com.bellatrix.trackerb.DatabaseClasses.MapTraversal;
 import com.google.android.gms.maps.model.LatLng;
 
 import org.json.JSONArray;
@@ -11,12 +12,14 @@ import java.util.HashMap;
 import java.util.List;
 
 public class DataParser {
-    public List<List<HashMap<String, String>>> parse(JSONObject jObject) {
+    public MapTraversal parse(JSONObject jObject) {
 
         List<List<HashMap<String, String>>> routes = new ArrayList<>();
         JSONArray jRoutes;
         JSONArray jLegs;
         JSONArray jSteps;
+        String distance = "", duration = "";
+
         try {
             jRoutes = jObject.getJSONArray("routes");
             /** Traversing all routes */
@@ -25,6 +28,11 @@ public class DataParser {
                 List path = new ArrayList<>();
                 /** Traversing all legs */
                 for (int j = 0; j < jLegs.length(); j++) {
+
+                    // get distance
+                    distance = (String) ((JSONObject) ((JSONObject) jLegs.get(j)).get("distance")).get("text");
+                    duration = (String) ((JSONObject) ((JSONObject) jLegs.get(j)).get("duration")).get("text");
+
                     jSteps = ((JSONObject) jLegs.get(j)).getJSONArray("steps");
 
                     /** Traversing all steps */
@@ -49,7 +57,7 @@ public class DataParser {
             e.printStackTrace();
         } catch (Exception e) {
         }
-        return routes;
+        return new MapTraversal(distance, duration, routes);
     }
 
 
@@ -91,4 +99,3 @@ public class DataParser {
         return poly;
     }
 }
-
