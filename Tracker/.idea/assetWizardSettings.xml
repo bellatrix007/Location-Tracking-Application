@@ -23,7 +23,7 @@
                                 <PersistentState>
                                   <option name="values">
                                     <map>
-                                      <entry key="url" value="jar:file:/Applications/Android%20Studio.app/Contents/plugins/android/lib/android.jar!/images/material_design_icons/communication/ic_message_black_24dp.xml" />
+                                      <entry key="url" value="jar:file:/Applications/Android%20Studio.app/Contents/plugins/android/lib/android.jar!/images/material_design_icons/content/ic_flag_black_24dp.xml" />
                                     </map>
                                   </option>
                                 </PersistentState>
@@ -33,7 +33,9 @@
                         </option>
                         <option name="values">
                           <map>
-                            <entry key="outputName" value="ic_message_black" />
+                            <entry key="color" value="4c9600" />
+                            <entry key="opacityPercent" value="91" />
+                            <entry key="outputName" value="ic_flag_green" />
                             <entry key="sourceFile" value="$PROJECT_DIR$/C:\Users\Aditi" />
                           </map>
                         </option>

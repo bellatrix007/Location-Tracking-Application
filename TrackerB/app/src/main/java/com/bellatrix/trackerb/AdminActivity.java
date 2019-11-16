@@ -3,6 +3,8 @@ package com.bellatrix.trackerb;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.SharedPreferences;
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
 import android.os.Bundle;
 
 import com.bellatrix.trackerb.Utils.FetchURL;
@@ -11,6 +13,8 @@ import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.OnMapReadyCallback;
 import com.google.android.gms.maps.SupportMapFragment;
+import com.google.android.gms.maps.model.BitmapDescriptor;
+import com.google.android.gms.maps.model.BitmapDescriptorFactory;
 import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.LatLngBounds;
 import com.google.android.gms.maps.model.Marker;
@@ -46,6 +50,7 @@ import android.view.ViewGroup;
 import android.widget.LinearLayout;
 import android.widget.TextView;
 
+import static com.bellatrix.trackerb.Utils.CommonFunctions.getBitmapFromVector;
 import static com.bellatrix.trackerb.Utils.CommonFunctions.getUrl;
 
 public class AdminActivity extends AppCompatActivity
@@ -323,7 +328,10 @@ public class AdminActivity extends AppCompatActivity
 
         if(role == 1) {  // customer
             if(cMarker == null) {
-                cMarker = mMap.addMarker(new MarkerOptions().position(custLoc).title(customer));
+//                BitmapDescriptor flagGreen = BitmapDescriptorFactory.fromResource(R.drawable.ic_flag);
+//                BitmapDescriptor locationGreen = getBitmapFromVector(this, R.drawable.ic_location,
+//                        ContextCompat.getColor(this, R.color.marker_color));
+                cMarker = mMap.addMarker(new MarkerOptions().title(customer).position(custLoc));
             } else {
                 cMarker.setTitle(customer);
                 cMarker.setPosition(custLoc);
@@ -331,7 +339,10 @@ public class AdminActivity extends AppCompatActivity
             cMarker.showInfoWindow();
         } else {
             if(dMarker == null) {
-                dMarker = mMap.addMarker(new MarkerOptions().position(delLoc).title(delivery));
+                BitmapDescriptor location = getBitmapFromVector(this, R.drawable.ic_location,
+                        ContextCompat.getColor(this, R.color.marker_color));
+                dMarker = mMap.addMarker(new MarkerOptions().position(delLoc).title(delivery).icon(location));
+
             } else {
                 dMarker.setTitle(delivery);
                 dMarker.setPosition(delLoc);

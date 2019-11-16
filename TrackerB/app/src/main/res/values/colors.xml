@@ -3,4 +3,6 @@
     <color name="colorPrimary">#FFBB33</color>
     <color name="colorPrimaryDark">#DFA635</color>
     <color name="colorAccent">#D6930D</color>
+    <color name="marker_color">#4C9600</color>
+    <color name="locationRed">#96200B</color>
 </resources>
