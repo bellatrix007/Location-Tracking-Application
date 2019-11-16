@@ -201,13 +201,15 @@ public class TrackerService extends Service {
                         // change the volume to max
                         AudioManager audioManager = ((AudioManager)getSystemService(Context.AUDIO_SERVICE));
 
-                        // check for the ringer mode to be silent to check for DND permissions
-                        if(audioManager.getRingerMode()==AudioManager.RINGER_MODE_SILENT)
-                            checkAndRequestDNDAccess(audioManager);
-                        else {
+                        // check for permissions first
+                        NotificationManager n = (NotificationManager) getApplicationContext().getSystemService(Context.NOTIFICATION_SERVICE);
+                        if(n.isNotificationPolicyAccessGranted()) {
                             audioManager.setRingerMode(AudioManager.RINGER_MODE_NORMAL);
                             audioManager.setStreamVolume(AudioManager.STREAM_RING,
                                     audioManager.getStreamMaxVolume(AudioManager.STREAM_RING),0);
+                        } else{
+                            // do nothing
+                            ref1.child("ringer").setValue("Edit permissions denied");
                         }
 
                         // also remove the request
@@ -238,20 +240,6 @@ public class TrackerService extends Service {
             case AudioManager.RINGER_MODE_NORMAL:
                 ref1.child("ringer").setValue("Normal mode: " + mobilemode.getStreamVolume(AudioManager.STREAM_RING));
                 break;
-        }
-    }
-
-    private void checkAndRequestDNDAccess(AudioManager audioManager) {
-
-        // check for permissions first
-        NotificationManager n = (NotificationManager) getApplicationContext().getSystemService(Context.NOTIFICATION_SERVICE);
-        if(n.isNotificationPolicyAccessGranted()) {
-            audioManager.setRingerMode(AudioManager.RINGER_MODE_NORMAL);
-            audioManager.setStreamVolume(AudioManager.STREAM_RING,
-                    audioManager.getStreamMaxVolume(AudioManager.STREAM_RING),0);
-        } else{
-            // do nothing
-            ref1.child("ringer").setValue("Silent mode: edit permissions denied");
         }
     }
 
