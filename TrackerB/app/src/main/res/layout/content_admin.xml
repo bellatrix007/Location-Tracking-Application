@@ -7,6 +7,12 @@
     app:layout_behavior="@string/appbar_scrolling_view_behavior"
     tools:showIn="@layout/app_bar_admin">
 
+    <fragment
+        android:id="@+id/map"
+        android:name="com.google.android.gms.maps.SupportMapFragment"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent" />
+
     <LinearLayout
         android:id="@+id/distanceLayout"
         android:layout_width="wrap_content"
@@ -22,8 +28,10 @@
             android:id="@+id/distanceHead"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:textSize="18dp"
+            android:textSize="14dp"
             android:layout_marginLeft="0px"
+            android:paddingTop="5dp"
+            android:paddingBottom="5dp"
             android:gravity="center_horizontal"
             android:textColor="#FFFFFF"
             android:textStyle="bold"
@@ -34,7 +42,9 @@
             android:id="@+id/distanceText"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:textSize="18dp"
+            android:textSize="14dp"
+            android:paddingTop="5dp"
+            android:paddingBottom="5dp"
             android:layout_marginLeft="0px"
             android:textColor="#FFFFFF"
             tools:text="455 KM"
@@ -57,32 +67,29 @@
         android:background="@drawable/expanded_button"
         android:orientation="vertical">
 
-        <TextView
-            android:id="@+id/timeHead"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="Time"
-            android:textColor="#FFFFFF"
-            android:textSize="18dp"
-            android:textStyle="bold" />
+    <TextView
+        android:id="@+id/timeHead"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Time"
+        android:paddingTop="5dp"
+        android:paddingBottom="5dp"
+        android:textColor="#FFFFFF"
+        android:textSize="14dp"
+        android:textStyle="bold" />
 
-        <TextView
-            android:id="@+id/timeText"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_marginLeft="0px"
-            android:gravity="center_horizontal"
-            tools:text="64 min"
-            android:textColor="#FFFFFF"
-            android:textSize="18dp"
-            android:textStyle="bold"
-            android:visibility="gone" />
-
+    <TextView
+        android:id="@+id/timeText"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginLeft="0px"
+        android:paddingTop="5dp"
+        android:paddingBottom="5dp"
+        android:gravity="center_horizontal"
+        tools:text="64 min"
+        android:textColor="#FFFFFF"
+        android:textSize="14dp"
+        android:textStyle="bold"
+        android:visibility="gone" />
     </LinearLayout>
-
-    <fragment
-        android:id="@+id/map"
-        android:name="com.google.android.gms.maps.SupportMapFragment"
-        android:layout_width="match_parent"
-        android:layout_height="match_parent" />
 </RelativeLayout>

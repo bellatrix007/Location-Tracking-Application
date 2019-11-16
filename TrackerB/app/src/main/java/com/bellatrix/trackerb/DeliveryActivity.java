@@ -167,12 +167,16 @@ public class DeliveryActivity extends AppCompatActivity
                     if(markerListener!=null)
                         databaseReference.child("location").child(customer).removeEventListener(markerListener);
                     updateCameraBounds();
+                    ((LinearLayout)findViewById(R.id.distanceLayout)).setVisibility(View.GONE);
+                    ((LinearLayout)findViewById(R.id.timeLayout)).setVisibility(View.GONE);
 
                 }
                 else {
                     isIdle = false;
                     newOrder = true;
                     nomapLayout.setVisibility(View.GONE);
+                    ((LinearLayout)findViewById(R.id.distanceLayout)).setVisibility(View.VISIBLE);
+                    ((LinearLayout)findViewById(R.id.timeLayout)).setVisibility(View.VISIBLE);
                     call.show();
                     delivered.show();
                 }
