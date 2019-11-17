@@ -853,7 +853,8 @@ public class MainActivity extends AppCompatActivity
                 }
                 smsBody = smsBody.trim();
 
-                if (smsSender.equals(user) && smsBody.endsWith("Sent by Tracker!")) {
+                // if the sender is same as prevKey and it is sent by Tracker
+                if (smsSender.equals(prevKey) && smsBody.endsWith("Sent by Tracker!")) {
                     // read the coordinates
                     try {
                         double lat = Double.parseDouble(smsBody.substring(0, smsBody.indexOf(" ")));
