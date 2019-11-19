@@ -94,13 +94,14 @@ public class AddOrderActivity extends AppCompatActivity {
     }
 
     private void addOrder(String customer, String description) {
+        String admin = getSharedPreferences("login", MODE_PRIVATE).getString("user", "");
+
         // add order in database
         String id = databaseReference.child("order").push().getKey();
-        Order order = new Order(customer, delivery, description);
+        Order order = new Order(admin, customer, delivery, description);
         databaseReference.child("order").child(id).setValue(order);
 
         // add order to admin
-        String admin = getSharedPreferences("login", MODE_PRIVATE).getString("user", "");
         databaseReference.child("admin").child(admin).child("order").child(id).setValue(description);
 
         // make delivery person as busy

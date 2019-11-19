@@ -79,11 +79,12 @@ public class CustomerActivity extends AppCompatActivity
     private LatLng currLocation, delLoc;
     private ValueEventListener markerListener, deliveryListener;
     private Marker mMarker;
-    private String delivery;
+    private String admin, delivery, status;
     private boolean oldOrder;
 
     private SubMenu viewOrders;
     private FloatingActionButton call;
+    private TextView delivered;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -134,7 +135,11 @@ public class CustomerActivity extends AppCompatActivity
         call.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                Intent intent = new Intent(Intent.ACTION_CALL, Uri.parse("tel:" + delivery));
+                Intent intent;
+                if(status.equals("0"))
+                    intent = new Intent(Intent.ACTION_CALL, Uri.parse("tel:" + delivery));
+                else
+                    intent = new Intent(Intent.ACTION_CALL, Uri.parse("tel:" + admin));
                 // first check for permission
                 if (ContextCompat.checkSelfPermission(CustomerActivity.this, Manifest.permission.CALL_PHONE) != PackageManager.PERMISSION_GRANTED) {
                     ActivityCompat.requestPermissions(CustomerActivity.this, new String[]{Manifest.permission.CALL_PHONE},REQUEST_PHONE_CALL);
@@ -142,6 +147,61 @@ public class CustomerActivity extends AppCompatActivity
                 else {
                     startActivity(intent);
                 }
+            }
+        });
+
+        delivered = findViewById(R.id.deliverd);
+        delivered.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                // remove listeners first
+                databaseReference.child("order").child(prevOrder).removeEventListener(markerListener);
+                if(deliveryListener!=null)
+                    databaseReference.child("location").child(delivery).removeEventListener(deliveryListener);
+
+                // delete the order from everywhere
+                // customer
+                databaseReference.child("customer").child(user).child("order").orderByKey().equalTo(prevOrder)
+                        .addListenerForSingleValueEvent(new ValueEventListener() {
+                    @Override
+                    public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
+                        for(DataSnapshot ds : dataSnapshot.getChildren())
+                            ds.getRef().removeValue();
+                    }
+
+                    @Override
+                    public void onCancelled(@NonNull DatabaseError databaseError) {
+
+                    }
+                });
+                // admin
+                databaseReference.child("admin").child(admin).child("order").orderByKey().equalTo(prevOrder)
+                        .addListenerForSingleValueEvent(new ValueEventListener() {
+                    @Override
+                    public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
+                        for(DataSnapshot ds : dataSnapshot.getChildren())
+                            ds.getRef().removeValue();
+                    }
+
+                    @Override
+                    public void onCancelled(@NonNull DatabaseError databaseError) {
+
+                    }
+                });
+                // order
+                databaseReference.child("order").orderByKey().equalTo(prevOrder)
+                        .addListenerForSingleValueEvent(new ValueEventListener() {
+                    @Override
+                    public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
+                        for(DataSnapshot ds : dataSnapshot.getChildren())
+                            ds.getRef().removeValue();
+                    }
+
+                    @Override
+                    public void onCancelled(@NonNull DatabaseError databaseError) {
+
+                    }
+                });
             }
         });
 
@@ -236,6 +296,9 @@ public class CustomerActivity extends AppCompatActivity
             public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
                 viewOrders.clear();
 
+                if(!dataSnapshot.hasChildren()) {
+                    // TODO: remove all the leftover UI
+                }
                 for(DataSnapshot ds: dataSnapshot.getChildren()) {
                     viewOrders.add(ds.getKey() + ": " + ds.getValue());
                 }
@@ -284,25 +347,54 @@ public class CustomerActivity extends AppCompatActivity
                 if(!prevOrder.equals(user_key))
                     oldOrder = false;
 
-                // add listener for delivery
-                delivery = ds.child("delivery").getValue().toString();
-                deliveryListener = databaseReference.child("location").child(delivery)
-                        .addValueEventListener(new ValueEventListener() {
-                    @Override
-                    public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
-                        // update customer location
-                        double lat = Double.parseDouble(dataSnapshot.child("latitude").getValue().toString());
-                        double lng = Double.parseDouble(dataSnapshot.child("longitude").getValue().toString());
+                // get admin
+                if(ds.child("admin").getValue()==null)
+                    return;
 
-                        delLoc = new LatLng(lat, lng);
-                        updateMarker();
+                admin = ds.child("admin").getValue().toString();
+
+                // check if order is marked delivered by the delivery person
+                status = ds.child("delivered").getValue().toString();
+
+                if(status.equals("1")) {
+                    // UI changes
+                    delivered.setVisibility(View.VISIBLE);
+
+                    // reinitialize map
+                    if(mMarker!=null)
+                    {
+                        mMarker.remove();
+                        mMarker = null;
                     }
-
-                    @Override
-                    public void onCancelled(@NonNull DatabaseError databaseError) {
-
+                    if(mPolyline!=null) {
+                        mPolyline.remove();
                     }
-                });
+                }
+                else {
+
+                    // UI changes
+                    delivered.setVisibility(View.GONE);
+
+                    // add listener for delivery
+                    delivery = ds.child("delivery").getValue().toString();
+                    deliveryListener = databaseReference.child("location").child(delivery)
+                            .addValueEventListener(new ValueEventListener() {
+                        @Override
+                        public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
+                            // update customer location
+                            double lat = Double.parseDouble(dataSnapshot.child("latitude").getValue().toString());
+                            double lng = Double.parseDouble(dataSnapshot.child("longitude").getValue().toString());
+
+                            delLoc = new LatLng(lat, lng);
+                            updateMarker();
+                        }
+
+                        @Override
+                        public void onCancelled(@NonNull DatabaseError databaseError) {
+
+                        }
+                    });
+                }
 
                 prevOrder = user_key;
             }

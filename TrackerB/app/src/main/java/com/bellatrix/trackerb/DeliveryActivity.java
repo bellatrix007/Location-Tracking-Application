@@ -431,7 +431,7 @@ public class DeliveryActivity extends AppCompatActivity
                 mMap.animateCamera(CameraUpdateFactory.newLatLngBounds(builder.build(), 20));
 
                 // remove customer listener
-                databaseReference.child("order").child("customer").removeEventListener(customerListener);
+                databaseReference.child("order").child(order).child("customer").removeEventListener(customerListener);
             }
             // else do nothing
         }

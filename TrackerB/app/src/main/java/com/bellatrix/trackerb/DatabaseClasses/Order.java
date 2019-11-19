@@ -2,17 +2,22 @@ package com.bellatrix.trackerb.DatabaseClasses;
 
 public class Order {
 
-    private String customer, delivery, description, delivered;
+    private String admin, customer, delivery, description, delivered;
 
     public Order() {
 
     }
 
-    public Order(String customer, String delivery, String description) {
+    public Order(String admin, String customer, String delivery, String description) {
+        this.admin = admin;
         this.customer = customer;
         this.delivery = delivery;
         this.description = description;
         this.delivered = "0";
+    }
+
+    public String getAdmin() {
+        return this.admin;
     }
 
     public String getCustomer() {
