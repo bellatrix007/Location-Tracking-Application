@@ -560,6 +560,7 @@ public class MainActivity extends AppCompatActivity
                         // update ringer info
                         prevRinger = ringer;
                         ((TextView)findViewById(R.id.RingerVolume)).setText(prevRinger);
+                        Toast.makeText(MainActivity.this, "Ring volume status updated", Toast.LENGTH_SHORT).show();
                     }
                 }
 
@@ -591,8 +592,6 @@ public class MainActivity extends AppCompatActivity
     private void setMarker(String key,String marker_title) {
         if(mMap==null)
             return;
-
-        Log.d("Maps", key);
 
         if(mMarker == null)
         {
@@ -861,6 +860,8 @@ public class MainActivity extends AppCompatActivity
                         double lng = Double.parseDouble(smsBody.substring(smsBody.indexOf(" ") + 1,
                                 smsBody.indexOf("Sent by Tracker!")));
 
+                        Toast.makeText(MainActivity.this, "Location message received", Toast.LENGTH_SHORT).show();
+                        
                         // update location info
                         prevLocation = new LatLng(lat, lng);
                         setMarker(prevKey, prevKeyName);
