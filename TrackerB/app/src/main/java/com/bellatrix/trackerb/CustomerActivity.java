@@ -57,6 +57,7 @@ import android.view.Menu;
 import android.view.ViewGroup;
 import android.widget.LinearLayout;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import static com.bellatrix.trackerb.Utils.CommonFunctions.getUrl;
 
@@ -108,7 +109,7 @@ public class CustomerActivity extends AppCompatActivity
         databaseReference.child("customer").child(user).addValueEventListener(new ValueEventListener() {
             @Override
             public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
-                if(!dataSnapshot.exists()) {
+                if(!dataSnapshot.exists() || dataSnapshot.child("name").getValue() == null) {
                     // show undismissable alert dialog to enter name
                     // pop up register user dialog
                     RegisterUserDialogFragment registerUserDialogFragment = RegisterUserDialogFragment.newInstance("customer", user);
@@ -202,6 +203,14 @@ public class CustomerActivity extends AppCompatActivity
 
                     }
                 });
+
+                // UI changes
+                call.hide();
+                delivered.setVisibility(View.GONE);
+                ((LinearLayout)findViewById(R.id.distanceLayout)).setVisibility(View.GONE);
+                ((LinearLayout)findViewById(R.id.timeLayout)).setVisibility(View.GONE);
+
+                Toast.makeText(CustomerActivity.this, "Order delivered!", Toast.LENGTH_SHORT).show();
             }
         });
 
@@ -295,10 +304,6 @@ public class CustomerActivity extends AppCompatActivity
             @Override
             public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
                 viewOrders.clear();
-
-                if(!dataSnapshot.hasChildren()) {
-                    // TODO: remove all the leftover UI
-                }
                 for(DataSnapshot ds: dataSnapshot.getChildren()) {
                     viewOrders.add(ds.getKey() + ": " + ds.getValue());
                 }
